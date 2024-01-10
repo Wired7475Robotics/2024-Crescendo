@@ -1,11 +1,11 @@
 package frc.robot.commands;
 
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Controll;
 import frc.robot.Robot;
 
-public class TeleopDrive extends CommandBase{
+public class TeleopDrive extends Command{
     double leftStickX;
     double leftStickY;
     double rightStickX;

@@ -12,7 +12,8 @@ public class ClimberSubsystem extends SubsystemBase{
     CANSparkMax leftClimber = new CANSparkMax(15, CANSparkLowLevel.MotorType.kBrushless);
     CANSparkMax rightClimber = new CANSparkMax(16, CANSparkLowLevel.MotorType.kBrushless);
 
-    public void runClimbers(double speed, boolean isBreakMode){
+    public void runClimbers
+    (double speed, boolean isBreakMode){
         leftClimber.set(speed);
         rightClimber.set(speed);
         if (isBreakMode) {

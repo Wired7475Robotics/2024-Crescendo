@@ -35,9 +35,20 @@ public final class Constants
 
   public static final class Drivebase
   {
-
     // Hold time on motor brakes when disabled
     public static final double WHEEL_LOCK_TIME = 10; // seconds
+  }
+
+  public static class Shooter
+  {
+    //Maximum shooter angle
+    public static final double MAX_TILT = 57; //degrees
+    //Minimum shooter angle
+    public static final double MIN_TILT = 10; //degrees
+    
+    public static final double ENCODER_OFFSET = 0; //degrees
+
+    
   }
 
   public static class OperatorConstants

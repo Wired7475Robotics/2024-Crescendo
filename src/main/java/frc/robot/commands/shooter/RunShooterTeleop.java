@@ -1,4 +1,4 @@
-package frc.robot.commands.swervedrive.shooter;
+package frc.robot.commands.shooter;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.RobotContainer;
@@ -13,12 +13,13 @@ public class RunShooterTeleop extends Command{
 
     @Override
     public void execute() {
-        shooter.runShooter(0.9, true);
+        shooter.runShooter(1, true);
     }
 
     @Override
     public void end(boolean interrupted) {
-        shooter.runShooter(0, true);
+        shooter.runShooter(1, true);
         
     }
+
 }

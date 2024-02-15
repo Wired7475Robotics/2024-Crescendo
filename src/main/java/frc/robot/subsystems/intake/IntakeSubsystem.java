@@ -13,4 +13,8 @@ public class IntakeSubsystem extends SubsystemBase{
     //Motor for running the intake rollers
     CANSparkMax intake = new CANSparkMax(11,CANSparkLowLevel.MotorType.kBrushless);
 
+    public void runIntakeRollers(double speed){
+        intake.set(speed);
+    }
+
 }

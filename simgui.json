@@ -12,7 +12,8 @@
     "types": {
       "/FMSInfo": "FMSInfo",
       "/SmartDashboard/Field": "Field2d",
-      "/SmartDashboard/navX-Sensor[1]": "Gyro"
+      "/SmartDashboard/navX-Sensor[1]": "Gyro",
+      "/SmartDashboard/navX-Sensor[4]": "Gyro"
     }
   },
   "NetworkTables": {
@@ -22,5 +23,8 @@
     "Transitory Values": {
       "open": false
     }
+  },
+  "NetworkTables Info": {
+    "visible": true
   }
 }

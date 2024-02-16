@@ -2,12 +2,13 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.intake.IntakeSubsystem;
+import frc.robot.subsystems.shooter.RollerSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 
 public class NoteFeed extends Command{
-    ShooterSubsystem shooter;
+    RollerSubsystem shooter;
     IntakeSubsystem intake;
-    public NoteFeed(ShooterSubsystem shooterSubsystem, IntakeSubsystem intakeSubsystem){
+    public NoteFeed(RollerSubsystem shooterSubsystem, IntakeSubsystem intakeSubsystem){
         addRequirements(shooterSubsystem);
         shooter = shooterSubsystem;
         intake = intakeSubsystem;

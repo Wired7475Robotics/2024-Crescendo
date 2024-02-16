@@ -4,8 +4,10 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj2.command.PIDCommand;
 import swervelib.math.Matter;
 import swervelib.parser.PIDFConfig;
 
@@ -44,9 +46,11 @@ public final class Constants
     //Maximum shooter angle
     public static final double MAX_TILT = 57; //degrees
     //Minimum shooter angle
-    public static final double MIN_TILT = 10; //degrees
+    public static final double MIN_TILT = 9.9; //degrees
+    //Maximum tilt speed
+    public static final double MAX_TILT_SPEED = 0.2;
     
-    public static final double ENCODER_OFFSET = 0; //degrees
+    public static final PIDController tiltPIDcontrol = new PIDController(0.01, 0, 0);
 
     
   }

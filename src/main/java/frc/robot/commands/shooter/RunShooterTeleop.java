@@ -18,7 +18,7 @@ public class RunShooterTeleop extends Command{
 
     @Override
     public void end(boolean interrupted) {
-        shooter.runShooter(1, true);
+        shooter.runShooter(0, true);
         
     }
 

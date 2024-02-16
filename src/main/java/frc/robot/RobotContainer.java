@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.PIDCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -17,14 +18,18 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.NoteFeed;
+import frc.robot.commands.intake.IntakeCommand;
 import frc.robot.commands.shooter.RunShooterTeleop;
+import frc.robot.commands.shooter.TiltDrive;
 import frc.robot.commands.swervedrive.drivebase.AbsoluteDrive;
 import frc.robot.commands.swervedrive.drivebase.AbsoluteFieldDrive;
 import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
 import frc.robot.commands.swervedrive.drivebase.TeleopDrive;
 import frc.robot.subsystems.climber.ClimberSubsystem;
 import frc.robot.subsystems.intake.IntakeSubsystem;
+import frc.robot.subsystems.shooter.RollerSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
+import frc.robot.subsystems.shooter.TiltSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 
 import java.io.File;
@@ -41,10 +46,14 @@ public class RobotContainer
   private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
                                                                          "swerve"));
   private final static ShooterSubsystem shooter = new ShooterSubsystem();
+
+  private final static RollerSubsystem rollers = new RollerSubsystem();
  
   private final static IntakeSubsystem intake = new IntakeSubsystem();
 
   private final static ClimberSubsystem climber = new ClimberSubsystem();
+
+  private final static TiltSubsystem tiltDrive = new TiltSubsystem();
 
   // CommandJoystick rotationController = new CommandJoystick(1);
   // Replace with CommandPS4Controller or CommandJoystick if needed
@@ -53,6 +62,7 @@ public class RobotContainer
   // CommandJoystick driverController   = new CommandJoystick(3);//(OperatorConstants.DRIVER_CONTROLLER_PORT);
   XboxController driverXbox = new XboxController(0);
   XboxController operatorXbox = new XboxController(3);
+  
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -61,7 +71,7 @@ public class RobotContainer
   {
     // Configure the trigger bindings
     configureBindings();
-
+    tiltDrive.resetTiltEncoder();
     AbsoluteDrive closedAbsoluteDrive = new AbsoluteDrive(drivebase,
                                                           // Applies deadbands and inverts controls because joysticks
                                                           // are back-right positive while robot
@@ -79,7 +89,7 @@ public class RobotContainer
                                                                                                     OperatorConstants.LEFT_Y_DEADBAND),
                                                                          () -> MathUtil.applyDeadband(driverXbox.getLeftX(),
                                                                                                       OperatorConstants.LEFT_X_DEADBAND),
-                                                                         () -> driverXbox.getRawAxis(2));
+                                                                         () -> driverXbox.getRawAxis(4));
 
     AbsoluteDriveAdv closedAbsoluteDriveAdv = new AbsoluteDriveAdv(drivebase,
                                                                       () -> MathUtil.applyDeadband(driverXbox.getLeftY(),
@@ -98,22 +108,21 @@ public class RobotContainer
                                                                                  OperatorConstants.LEFT_Y_DEADBAND),
                                                     () -> MathUtil.applyDeadband(driverXbox.getLeftX(),
                                                                                  OperatorConstants.LEFT_X_DEADBAND),
-                                                    () -> driverXbox.getRawAxis(2), () -> true);
+                                                    () -> driverXbox.getRawAxis(4), () -> true);
     TeleopDrive closedFieldRel = new TeleopDrive(
         drivebase,
-        () -> MathUtil.applyDeadband(driverController.getRawAxis(1), OperatorConstants.LEFT_Y_DEADBAND),
-        () -> MathUtil.applyDeadband(driverController.getRawAxis(0), OperatorConstants.LEFT_X_DEADBAND),
-        () -> -driverController.getRawAxis(2), () -> true);
+        () -> MathUtil.applyDeadband(driverXbox.getRawAxis(1), OperatorConstants.LEFT_Y_DEADBAND),
+        () -> MathUtil.applyDeadband(driverXbox.getRawAxis(0), OperatorConstants.LEFT_X_DEADBAND),
+        () -> -driverXbox.getRawAxis(4), () -> true);
 
-    drivebase.setDefaultCommand(!RobotBase.isSimulation() ? closedAbsoluteDrive : closedFieldAbsoluteDrive);
+    drivebase.setDefaultCommand(!RobotBase.isSimulation() ? closedFieldRel : closedAbsoluteDrive);
 
     RunShooterTeleop runShooterCommand = new RunShooterTeleop(shooter);
+    TiltDrive tiltCommand = new TiltDrive(tiltDrive, operatorXbox);
 
-    ParallelCommandGroup shooterCommandGroup = new ParallelCommandGroup(
-      runShooterCommand 
-    );
-
-    //shooter.setDefaultCommand(shooterCommandGroup);
+    //shooter.setDefaultCommand(runShooterCommand);
+    tiltDrive.setDefaultCommand(tiltCommand);
+    
   }
 
   /**
@@ -130,7 +139,7 @@ public class RobotContainer
     //new JoystickButton(driverXbox, 1).onTrue((new InstantCommand(drivebase::zeroGyro)));
 //    new JoystickButton(driverXbox, 3).onTrue(new InstantCommand(drivebase::addFakeVisionReading));
 //    new JoystickButton(driverXbox, 3).whileTrue(new RepeatCommand(new InstantCommand(drivebase::lock, drivebase)))
-    new JoystickButton(driverXbox,1).whileTrue(new NoteFeed(shooter, intake));
+    //new JoystickButton(driverXbox,1).whileTrue(new NoteFeed(shooter, intake));
   }
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.

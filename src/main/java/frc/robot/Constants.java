@@ -41,18 +41,31 @@ public final class Constants
     public static final double WHEEL_LOCK_TIME = 10; // seconds
   }
 
+  public static class Intake
+  {
+    public static final double INTAKE_SPEED = 0.5;
+
+    public static final double MIN_TILT = 0; //degrees
+
+    public static final double MAX_TILT = 72.3; //degrees
+
+    public static final double INTAKE_CONVERSION_FACTOR = 16/34*16;
+
+    public static final PIDController tiltPIDcontrol = new PIDController(0.01, 0, 0);
+  }
+
   public static class Shooter
   {
     //Maximum shooter angle
     public static final double MAX_TILT = 57; //degrees
     //Minimum shooter angle
-    public static final double MIN_TILT = 9.9; //degrees
+    public static final double MIN_TILT = 10; //degrees
     //Maximum tilt speed
     public static final double MAX_TILT_SPEED = 0.2;
-    
-    public static final PIDController tiltPIDcontrol = new PIDController(0.01, 0, 0);
 
-    
+    public static final double TILT_CONVERSION_FACTOR = 50/16;
+
+    public static final PIDController tiltPIDcontrol = new PIDController(0.01, 0, 0);
   }
 
   public static class OperatorConstants

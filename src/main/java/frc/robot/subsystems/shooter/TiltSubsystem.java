@@ -17,6 +17,8 @@ public class TiltSubsystem extends SubsystemBase {
 
   double targetValue;
 
+  double tiltConversionFactor;
+
   public TiltSubsystem() {
    
   }
@@ -29,6 +31,8 @@ public class TiltSubsystem extends SubsystemBase {
           Math.max(-Constants.Shooter.MAX_TILT_SPEED, speed)
         )
       );
+
+      tiltConversionFactor = Constants.Shooter.TILT_CONVERSION_FACTOR;
     
   }
 
@@ -38,7 +42,7 @@ public class TiltSubsystem extends SubsystemBase {
   }
 
   public double getTiltDegrees() {
-    double rotations = -tiltEncoder.get() / 3;
+    double rotations = -tiltEncoder.get() / tiltConversionFactor;
     return (360 * rotations) + 10;
   }
 

@@ -57,7 +57,7 @@ public final class Constants
   public static class Shooter
   {
     //Maximum shooter angle
-    public static final double MAX_TILT = 57; //degrees
+    public static final double MAX_TILT = 57.5; //degrees
     //Minimum shooter angle
     public static final double MIN_TILT = 10; //degrees
     //Maximum tilt speed
@@ -65,7 +65,9 @@ public final class Constants
 
     public static final double TILT_CONVERSION_FACTOR = 50/16;
 
-    public static final PIDController tiltPIDcontrol = new PIDController(0.01, 0, 0);
+    public static final PIDController tiltPIDcontrol = new PIDController(0.02, 0, 0);
+
+    public static final double STICK_DEADZONE = 0.1;
   }
 
   public static class OperatorConstants

@@ -115,11 +115,12 @@ public class RobotContainer
         () -> MathUtil.applyDeadband(driverXbox.getRawAxis(0), OperatorConstants.LEFT_X_DEADBAND),
         () -> -driverXbox.getRawAxis(4), () -> true);
 
-    drivebase.setDefaultCommand(!RobotBase.isSimulation() ? closedFieldRel : closedAbsoluteDrive);
+    drivebase.setDefaultCommand(!RobotBase.isSimulation() ? closedAbsoluteDrive : closedFieldRel);
 
     RunShooterTeleop runShooterCommand = new RunShooterTeleop(shooter);
     TiltDrive tiltCommand = new TiltDrive(tiltDrive, operatorXbox);
-
+    
+    
     //shooter.setDefaultCommand(runShooterCommand);
     tiltDrive.setDefaultCommand(tiltCommand);
     
@@ -139,7 +140,8 @@ public class RobotContainer
     //new JoystickButton(driverXbox, 1).onTrue((new InstantCommand(drivebase::zeroGyro)));
 //    new JoystickButton(driverXbox, 3).onTrue(new InstantCommand(drivebase::addFakeVisionReading));
 //    new JoystickButton(driverXbox, 3).whileTrue(new RepeatCommand(new InstantCommand(drivebase::lock, drivebase)))
-    //new JoystickButton(driverXbox,1).whileTrue(new NoteFeed(shooter, intake));
+    new JoystickButton(operatorXbox,1).whileTrue(new NoteFeed(rollers, intake));
+    new JoystickButton(operatorXbox,2).toggleOnTrue(new RunShooterTeleop(shooter));
   }
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.

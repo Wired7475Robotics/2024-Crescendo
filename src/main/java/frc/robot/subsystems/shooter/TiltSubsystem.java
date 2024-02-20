@@ -20,7 +20,7 @@ public class TiltSubsystem extends SubsystemBase {
   double tiltConversionFactor;
 
   public TiltSubsystem() {
-   
+    tiltConversionFactor = Constants.Shooter.TILT_CONVERSION_FACTOR;
   }
 
   public void runTilt(double speed) {
@@ -32,7 +32,7 @@ public class TiltSubsystem extends SubsystemBase {
         )
       );
 
-      tiltConversionFactor = Constants.Shooter.TILT_CONVERSION_FACTOR;
+      
     
   }
 
@@ -57,7 +57,7 @@ public class TiltSubsystem extends SubsystemBase {
    *
    */
   public double getTargetAngle(double stickaxis) {
-    if (Shooter.MIN_TILT < targetValue -stickaxis && targetValue - stickaxis < Shooter.MAX_TILT) {
+    if (Shooter.MIN_TILT < targetValue -stickaxis && targetValue - stickaxis < Shooter.MAX_TILT && ( stickaxis > Shooter.STICK_DEADZONE || stickaxis < -Shooter.STICK_DEADZONE)) {
         targetValue = targetValue - stickaxis;
     } else {
       System.err.print("Shooter tried to go oudside of its bounds");
@@ -68,7 +68,8 @@ public class TiltSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     super.periodic();
-    SmartDashboard.putNumber("Shooter Tilt", 90 - getTiltDegrees());
-    SmartDashboard.putNumber("Shooter Target", 90 - targetValue);
+    SmartDashboard.putNumber("Shooter Tilt", getTiltDegrees());
+    SmartDashboard.putNumber("Shooter Target", targetValue);
+    SmartDashboard.putNumber("ShooterTilt Error", getTiltDegrees()-targetValue);
   }
 }

@@ -1,45 +1,32 @@
 package frc.robot.commands.climber;
 
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.climber.ClimberSubsystem;
 
 public class ClimbCommand extends Command {
 
-    private ClimberSubsystem climber;
+  private ClimberSubsystem climber;
+  private XboxController controller;
 
-    public ClimbCommand(ClimberSubsystem climberSubsystem){
-        addRequirements(climberSubsystem);
-        climber = climberSubsystem;
-    }
+  public ClimbCommand(
+    ClimberSubsystem climberSubsystem,
+    XboxController controller
+  ) {
+    addRequirements(climberSubsystem);
+    climber = climberSubsystem;
+    this.controller = controller;
+  }
 
-    @Override
-    public void initialize() {
-        climber.runClimbers(0.75, true);
-        try {
-            wait(50);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        climber.runClimbers(0, true);
-    }
+  @Override
+  public void execute() {
+    double speed =
+      controller.getLeftTriggerAxis() - controller.getRightTriggerAxis();
+    climber.runClimbers(speed, true);
+  }
 
-    @Override
-    public void execute() {
-        climber.runClimbers(0, false);
-        try {
-            wait(50);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        climber.runClimbers(0.75, true);
-        try {
-            wait(50);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        climber.runClimbers(0, false);
-    }
+  @Override
+  public void end(boolean interrupted) {
+    climber.runClimbers(0, false);
+  }
 }

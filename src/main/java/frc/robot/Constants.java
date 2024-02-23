@@ -19,63 +19,84 @@ import swervelib.parser.PIDFConfig;
  * <p>It is advised to statically import this class (or one of its inner classes) wherever the
  * constants are needed, to reduce verbosity.
  */
-public final class Constants
-{
+public final class Constants {
 
   public static final double ROBOT_MASS = (148 - 20.3) * 0.453592; // 32lbs * kg per pound
-  public static final Matter CHASSIS    = new Matter(new Translation3d(0, 0, Units.inchesToMeters(8)), ROBOT_MASS);
-  public static final double LOOP_TIME  = 0.13; //s, 20ms + 110ms sprk max velocity lag
+  public static final Matter CHASSIS = new Matter(
+    new Translation3d(0, 0, Units.inchesToMeters(8)),
+    ROBOT_MASS
+  );
+  public static final double LOOP_TIME = 0.13; //s, 20ms + 110ms sprk max velocity lag
 
-  public static final class Auton
-  {
+  public static final class Auton {
 
-    public static final PIDFConfig TranslationPID     = new PIDFConfig(0.7, 0, 0);
+    public static final PIDFConfig TranslationPID = new PIDFConfig(0.7, 0, 0);
     public static final PIDFConfig angleAutoPID = new PIDFConfig(0.4, 0, 0.01);
 
     public static final double MAX_ACCELERATION = 2;
   }
 
-  public static final class Drivebase
-  {
+  public static final class Drivebase {
+
     // Hold time on motor brakes when disabled
     public static final double WHEEL_LOCK_TIME = 10; // seconds
   }
 
-  public static class Intake
-  {
+  public static class Intake {
+
     public static final double INTAKE_SPEED = 0.5;
 
     public static final double MIN_TILT = 0; //degrees
 
-    public static final double MAX_TILT = 72.3; //degrees
+    public static final double MAX_TILT = 75.3; //degrees
 
-    public static final double INTAKE_CONVERSION_FACTOR = 16/34*16;
+    public static final double INTAKE_CONVERSION_FACTOR = 53.125; // 25/16*34
 
-    public static final PIDController tiltPIDcontrol = new PIDController(0.01, 0, 0);
+    public static final PIDController tiltPIDcontrol = new PIDController(
+      0.01,
+      0,
+      0
+    );
+
+    public static final double STICK_DEADZONE = 0.1;
   }
 
-  public static class Shooter
-  {
+  public static class Shooter {
+
     //Maximum shooter angle
-    public static final double MAX_TILT = 57.5; //degrees
+    public static final double MAX_TILT = 62; //degrees
     //Minimum shooter angle
     public static final double MIN_TILT = 10; //degrees
     //Maximum tilt speed
     public static final double MAX_TILT_SPEED = 0.2;
 
-    public static final double TILT_CONVERSION_FACTOR = 50/16;
+    public static final double TILT_CONVERSION_FACTOR = 50 / 16;
 
-    public static final PIDController tiltPIDcontrol = new PIDController(0.02, 0, 0);
+    public static final PIDController tiltPIDcontrol = new PIDController(
+      0.02,
+      0,
+      0
+    );
+
+    public static class MathConstants {
+      public static final double APRIL_TAG_HEIGHT = 0;
+      public static final double TARGET_HEIGHT = 0;
+      public static final double TARGET_DISTANCE = 0;
+      public static final double SHOOTER_DISTANCE = 0;
+      public static final double SHOOTER_HEIGHT = 0;
+      public static final double CAMERA_HEIGHT = 0;
+      public static final double CAMERA_ANGLE = 0;
+      public static final double GRAVITY_CONSTANT = 0.01;
+    }
 
     public static final double STICK_DEADZONE = 0.1;
   }
 
-  public static class OperatorConstants
-  {
+  public static class OperatorConstants {
 
     // Joystick Deadband
     public static final double LEFT_X_DEADBAND = 0.01;
-    public static final double LEFT_Y_DEADBAND = 0.01;
+    public static final double LEFT_Y_DEADBAND = 0.02;
     public static final double RIGHT_X_DEADBAND = 0.01;
     public static final double TURN_CONSTANT = 6;
   }

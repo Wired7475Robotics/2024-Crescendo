@@ -7,6 +7,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Shooter;
+import frc.robot.Constants.Shooter.MathConstants;
+import java.math.MathContext;
+import org.opencv.core.Mat;
 
 public class TiltSubsystem extends SubsystemBase {
 
@@ -21,19 +24,23 @@ public class TiltSubsystem extends SubsystemBase {
 
   public TiltSubsystem() {
     tiltConversionFactor = Constants.Shooter.TILT_CONVERSION_FACTOR;
+
+    super.periodic();
+    SmartDashboard.putNumber("Shooter Tilt", getTiltDegrees());
+    SmartDashboard.putNumber("Shooter Target", targetValue);
+    SmartDashboard.putNumber(
+      "ShooterTilt Error",
+      getTiltDegrees() - targetValue
+    );
   }
 
   public void runTilt(double speed) {
-    
-      tiltDrive.set(
-        Math.min(
-          Constants.Shooter.MAX_TILT_SPEED,
-          Math.max(-Constants.Shooter.MAX_TILT_SPEED, speed)
-        )
-      );
-
-      
-    
+    tiltDrive.set(
+      Math.min(
+        Constants.Shooter.MAX_TILT_SPEED,
+        Math.max(-Constants.Shooter.MAX_TILT_SPEED, speed)
+      )
+    );
   }
 
   public void resetTiltEncoder() {
@@ -46,8 +53,17 @@ public class TiltSubsystem extends SubsystemBase {
     return (360 * rotations) + 10;
   }
 
-  public double getTargetAngle() {
-    return 0;
+  public double calculateTargetAngle(double AprilTagAngle) {
+    double distance =
+      Math.tan(AprilTagAngle + MathConstants.CAMERA_ANGLE) /
+      (MathConstants.APRIL_TAG_HEIGHT - MathConstants.CAMERA_HEIGHT);
+
+    return Math.atan(
+      (MathConstants.TARGET_HEIGHT - MathConstants.SHOOTER_HEIGHT) /
+      (MathConstants.TARGET_DISTANCE + MathConstants.SHOOTER_DISTANCE) +
+      distance -
+      (distance * MathConstants.GRAVITY_CONSTANT)
+    );
   }
 
   /**
@@ -57,10 +73,17 @@ public class TiltSubsystem extends SubsystemBase {
    *
    */
   public double getTargetAngle(double stickaxis) {
-    if (Shooter.MIN_TILT < targetValue -stickaxis && targetValue - stickaxis < Shooter.MAX_TILT && ( stickaxis > Shooter.STICK_DEADZONE || stickaxis < -Shooter.STICK_DEADZONE)) {
-        targetValue = targetValue - stickaxis;
+    if (
+      Shooter.MIN_TILT < targetValue - stickaxis &&
+      targetValue - stickaxis < Shooter.MAX_TILT &&
+      (
+        stickaxis > Shooter.STICK_DEADZONE ||
+        stickaxis < -Shooter.STICK_DEADZONE
+      )
+    ) {
+      targetValue = targetValue - stickaxis;
     } else {
-      System.err.print("Shooter tried to go oudside of its bounds");
+      System.out.println("Shooter tried to go oudside of its bounds");
     }
     return targetValue;
   }
@@ -70,6 +93,9 @@ public class TiltSubsystem extends SubsystemBase {
     super.periodic();
     SmartDashboard.putNumber("Shooter Tilt", getTiltDegrees());
     SmartDashboard.putNumber("Shooter Target", targetValue);
-    SmartDashboard.putNumber("ShooterTilt Error", getTiltDegrees()-targetValue);
+    SmartDashboard.putNumber(
+      "ShooterTilt Error",
+      getTiltDegrees() - targetValue
+    );
   }
 }

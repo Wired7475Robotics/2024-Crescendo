@@ -22,15 +22,18 @@ import swervelib.parser.PIDFConfig;
 public final class Constants {
 
   public static final double ROBOT_MASS = (148 - 20.3) * 0.453592; // 32lbs * kg per pound
+
   public static final Matter CHASSIS = new Matter(
     new Translation3d(0, 0, Units.inchesToMeters(8)),
     ROBOT_MASS
   );
+
   public static final double LOOP_TIME = 0.13; //s, 20ms + 110ms sprk max velocity lag
 
   public static final class Auton {
 
     public static final PIDFConfig TranslationPID = new PIDFConfig(0.7, 0, 0);
+
     public static final PIDFConfig angleAutoPID = new PIDFConfig(0.4, 0, 0.01);
 
     public static final double MAX_ACCELERATION = 2;
@@ -40,11 +43,17 @@ public final class Constants {
 
     // Hold time on motor brakes when disabled
     public static final double WHEEL_LOCK_TIME = 10; // seconds
+
+    public static final double FAST_SPEED = 1;
+
+    public static final double MEDIUM_SPEED = 0.75;
+
+    public static final double SLOW_SPEED = 0.3;
   }
 
   public static class Intake {
 
-    public static final double INTAKE_SPEED = 0.5;
+    public static final double INTAKE_SPEED = 1;
 
     public static final double MIN_TILT = 0; //degrees
 
@@ -53,12 +62,16 @@ public final class Constants {
     public static final double INTAKE_CONVERSION_FACTOR = 53.125; // 25/16*34
 
     public static final PIDController tiltPIDcontrol = new PIDController(
-      0.01,
+      0.06,
       0,
-      0
+      0.000
     );
 
-    public static final double STICK_DEADZONE = 0.1;
+    public static final int HIGH = 1;
+
+    public static final int LOW = 0;
+
+   
   }
 
   public static class Shooter {
@@ -79,13 +92,21 @@ public final class Constants {
     );
 
     public static class MathConstants {
+
       public static final double APRIL_TAG_HEIGHT = 0;
+
       public static final double TARGET_HEIGHT = 0;
+
       public static final double TARGET_DISTANCE = 0;
+
       public static final double SHOOTER_DISTANCE = 0;
+
       public static final double SHOOTER_HEIGHT = 0;
+
       public static final double CAMERA_HEIGHT = 0;
+
       public static final double CAMERA_ANGLE = 0;
+
       public static final double GRAVITY_CONSTANT = 0.01;
     }
 
@@ -96,8 +117,11 @@ public final class Constants {
 
     // Joystick Deadband
     public static final double LEFT_X_DEADBAND = 0.01;
+
     public static final double LEFT_Y_DEADBAND = 0.02;
+
     public static final double RIGHT_X_DEADBAND = 0.01;
+
     public static final double TURN_CONSTANT = 6;
   }
 }

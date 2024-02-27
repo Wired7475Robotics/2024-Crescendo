@@ -6,6 +6,7 @@ package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -18,10 +19,10 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants.Intake;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.climber.*;
 import frc.robot.commands.intake.*;
-import frc.robot.commands.intake.RunRollerCommand;
 import frc.robot.commands.shooter.*;
 import frc.robot.commands.swervedrive.drivebase.AbsoluteDrive;
 import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
@@ -35,6 +36,7 @@ import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.shooter.TiltSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import java.io.File;
+import javax.swing.text.html.HTMLDocument.HTMLReader.HiddenAction;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a "declarative" paradigm, very
@@ -59,13 +61,10 @@ public class RobotContainer {
 
   private static final DeployerSubsystem intakeDeployer = new DeployerSubsystem();
 
-  // CommandJoystick rotationController = new CommandJoystick(1);
-  // Replace with CommandPS4Controller or CommandJoystick if needed
-  CommandJoystick driverController = new CommandJoystick(1);
+  Joystick leftDriverNunchuck = new Joystick(0);
+  Joystick rightDriverNunchuck = new Joystick(1);
 
-  // CommandJoystick driverController   = new CommandJoystick(3);//(OperatorConstants.DRIVER_CONTROLLER_PORT);
-  XboxController driverXbox = new XboxController(0);
-  XboxController operatorXbox = new XboxController(1);
+  XboxController operatorXbox = new XboxController(2);
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -75,7 +74,7 @@ public class RobotContainer {
     configureBindings();
     climber.resetEncoders();
     tiltDrive.resetTiltEncoder();
-    intakeDeployer.resetTiltEncoder();
+
     AbsoluteDrive closedAbsoluteDrive = new AbsoluteDrive(
       drivebase,
       // Applies deadbands and inverts controls because joysticks
@@ -83,100 +82,58 @@ public class RobotContainer {
       // controls are front-left positive
       () ->
         MathUtil.applyDeadband(
-          -driverXbox.getLeftY(),
+          -drivebase.getAxis(
+            leftDriverNunchuck.getY(),
+            leftDriverNunchuck.getRawButton(0),
+            rightDriverNunchuck.getRawButton(1)
+          ),
           OperatorConstants.LEFT_Y_DEADBAND
         ),
       () ->
         MathUtil.applyDeadband(
-          -driverXbox.getLeftX(),
+          -drivebase.getAxis(
+            leftDriverNunchuck.getX(),
+            leftDriverNunchuck.getRawButton(0),
+            rightDriverNunchuck.getRawButton(1)
+          ),
           OperatorConstants.LEFT_X_DEADBAND
         ),
-      () -> -driverXbox.getRightX(),
-      () -> -driverXbox.getRightY()
+      () -> -rightDriverNunchuck.getX(),
+      () -> -rightDriverNunchuck.getY()
     );
 
     AbsoluteFieldDrive closedFieldAbsoluteDrive = new AbsoluteFieldDrive(
       drivebase,
       () ->
         MathUtil.applyDeadband(
-          driverXbox.getLeftY(),
+          drivebase.getAxis(
+            leftDriverNunchuck.getY(),
+            leftDriverNunchuck.getRawButton(0),
+            rightDriverNunchuck.getRawButton(0)
+          ),
           OperatorConstants.LEFT_Y_DEADBAND
         ),
       () ->
         MathUtil.applyDeadband(
-          driverXbox.getLeftX(),
+          drivebase.getAxis(
+            leftDriverNunchuck.getX(),
+            leftDriverNunchuck.getRawButton(0),
+            rightDriverNunchuck.getRawButton(0)
+          ),
           OperatorConstants.LEFT_X_DEADBAND
         ),
-      () -> driverXbox.getRawAxis(4)
-    );
-
-    AbsoluteDriveAdv closedAbsoluteDriveAdv = new AbsoluteDriveAdv(
-      drivebase,
-      () ->
-        MathUtil.applyDeadband(
-          driverXbox.getLeftY(),
-          OperatorConstants.LEFT_Y_DEADBAND
-        ),
-      () ->
-        MathUtil.applyDeadband(
-          driverXbox.getLeftX(),
-          OperatorConstants.LEFT_X_DEADBAND
-        ),
-      () ->
-        MathUtil.applyDeadband(
-          driverXbox.getRightX(),
-          OperatorConstants.RIGHT_X_DEADBAND
-        ),
-      driverXbox::getYButtonPressed,
-      driverXbox::getAButtonPressed,
-      driverXbox::getXButtonPressed,
-      driverXbox::getBButtonPressed
-    );
-
-    TeleopDrive simClosedFieldRel = new TeleopDrive(
-      drivebase,
-      () ->
-        MathUtil.applyDeadband(
-          driverXbox.getLeftY(),
-          OperatorConstants.LEFT_Y_DEADBAND
-        ),
-      () ->
-        MathUtil.applyDeadband(
-          driverXbox.getLeftX(),
-          OperatorConstants.LEFT_X_DEADBAND
-        ),
-      () -> driverXbox.getRawAxis(4),
-      () -> true
-    );
-    TeleopDrive closedFieldRel = new TeleopDrive(
-      drivebase,
-      () ->
-        MathUtil.applyDeadband(
-          driverXbox.getRawAxis(1),
-          OperatorConstants.LEFT_Y_DEADBAND
-        ),
-      () ->
-        MathUtil.applyDeadband(
-          driverXbox.getRawAxis(0),
-          OperatorConstants.LEFT_X_DEADBAND
-        ),
-      () -> -driverXbox.getRawAxis(4),
-      () -> true
+      () -> rightDriverNunchuck.getY()
     );
 
     drivebase.setDefaultCommand(
-      !RobotBase.isSimulation() ? closedAbsoluteDrive : closedFieldRel
+      !RobotBase.isSimulation() ? closedAbsoluteDrive : closedFieldAbsoluteDrive
     );
 
     TiltDrive tiltCommand = new TiltDrive(tiltDrive, operatorXbox);
     ClimbCommand climbCommand = new ClimbCommand(climber, operatorXbox);
-    IntakeDeployCommand deployIntakeCommand = new IntakeDeployCommand(
-      intakeDeployer,
-      operatorXbox
-    );
     tiltDrive.setDefaultCommand(tiltCommand);
     climber.setDefaultCommand(climbCommand);
-    intakeDeployer.setDefaultCommand(deployIntakeCommand);
+    intakeDeployer.setDefaultCommand(new InstantCommand(intakeDeployer::runTiltSlow, intakeDeployer));
   }
 
   /**
@@ -188,26 +145,26 @@ public class RobotContainer {
    */
   private void configureBindings() {
     // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
-    frc.robot.commands.intake.RunRollerCommand intakeRollers = new RunRollerCommand(
-      intake,
-      false,
-      -1
+    RunRollerCommand rollerCommand = new RunRollerCommand(intake, false, -0.75);
+    SequentialCommandGroup intakeCommandGroup = new SequentialCommandGroup(
+      new ParallelCommandGroup(
+        new IntakeDeployCommand(intakeDeployer, Intake.LOW),
+        rollerCommand,
+        new IndexerCommand(rollers, false, 0.75).until(rollerCommand::isFinished)
+      ),
+      new ParallelCommandGroup(
+        new IntakeDeployCommand(intakeDeployer, Intake.HIGH),
+        new IndexerCommand(rollers, false, 0.15)
+        ),
+        new IndexerCommand(rollers, true, -0.3).withTimeout(0.2)
     );
 
-    ParallelCommandGroup intakeCommandGroup = new ParallelCommandGroup(
-      intakeRollers,
-      new frc.robot.commands.shooter.RunRollerCommand(rollers, false, 1)
-        .andThen(
-          new frc.robot.commands.shooter.RunRollerCommand(rollers, true, -0.5)
-            .until(rollers::getBeamBreak)
-        )
-    );
-
-    new JoystickButton(driverXbox, 1)
+    new JoystickButton(rightDriverNunchuck, 2)
       .onTrue((new InstantCommand(drivebase::zeroGyro)));
-    //new JoystickButton(driverXbox, 3).onTrue(new InstantCommand(drivebase::addFakeVisionReading));
-    //    new JoystickButton(driverXbox, 3).whileTrue(new RepeatCommand(new InstantCommand(drivebase::lock, drivebase)))
-    new JoystickButton(operatorXbox, 1).onTrue(intakeCommandGroup);
+    new JoystickButton(operatorXbox, 1)
+      .onTrue(
+          intakeCommandGroup
+      );
     new JoystickButton(operatorXbox, 2)
       .toggleOnTrue(new RunShooterTeleop(shooter));
   }

@@ -23,7 +23,7 @@ public class ClimberSubsystem extends SubsystemBase {
   RelativeEncoder rightEncoder = rightClimber.getEncoder();
 
   public void runClimbers(double speed, boolean isBreakMode) {
-    //leftClimber.set(-speed);
+    leftClimber.set(-speed);
     rightClimber.set(speed);
     if (isBreakMode) {
       leftClimber.setIdleMode(IdleMode.kBrake);

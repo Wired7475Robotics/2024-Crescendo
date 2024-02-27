@@ -31,12 +31,13 @@ public class RunRollerCommand extends Command {
   @Override
   public boolean isFinished() {
     if (!ignoreBeamBrake) {
-      if (rollers.getBeamBreak()) {
-        triggeredOnce = true;
-      }
-      if (triggeredOnce && !rollers.getBeamBreak()) {
+      if (triggeredOnce && rollers.getBeamBreak()) {
         return true;
       }
+      if (!rollers.getBeamBreak()) {
+        triggeredOnce = true;
+      }
+      
     }
     return false;
   }
@@ -44,5 +45,6 @@ public class RunRollerCommand extends Command {
   @Override
   public void end(boolean interrupted) {
     rollers.runIntakeRollers(0);
+    triggeredOnce = false;
   }
 }

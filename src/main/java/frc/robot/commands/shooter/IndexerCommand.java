@@ -3,13 +3,13 @@ package frc.robot.commands.shooter;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.shooter.RollerSubsystem;
 
-public class RunRollerCommand extends Command {
+public class IndexerCommand extends Command {
 
   RollerSubsystem rollers;
   boolean ignoreBeamBrake;
   double speed;
 
-  public RunRollerCommand(
+  public IndexerCommand(
     RollerSubsystem rollers,
     boolean ignoreBeamBrake,
     double speed
@@ -17,7 +17,7 @@ public class RunRollerCommand extends Command {
     addRequirements(rollers);
     this.rollers = rollers;
     this.ignoreBeamBrake = ignoreBeamBrake;
-    this.speed = speed;
+    this.speed = -speed;
   }
 
   @Override
@@ -27,7 +27,7 @@ public class RunRollerCommand extends Command {
 
   @Override
   public boolean isFinished() {
-    if (!ignoreBeamBrake && rollers.getBeamBreak()) {
+    if (!ignoreBeamBrake && !rollers.getBeamBreak()) {
       return true;
     }
     return false;

@@ -43,6 +43,8 @@ public class SwerveSubsystem extends SubsystemBase {
 
   public static double[] absPos = new double[4];
 
+  public double targetAngle;
+
   /**
    * Maximum speed of the robot in meters per second, used to limit acceleration.
    */
@@ -463,4 +465,15 @@ public class SwerveSubsystem extends SubsystemBase {
   public double getAxis(double axis, boolean slow, boolean fast){
       return slow? axis * Drivebase.SLOW_SPEED : fast? axis * Drivebase.FAST_SPEED : axis * Drivebase.MEDIUM_SPEED;
   }
+
+  public double getTargetAngle(double aprilTagAngle){
+    targetAngle = getHeading().getDegrees() + aprilTagAngle + (aprilTagAngle*Drivebase.VELOCITY_CONSTANT);
+     return targetAngle;
+  }
+
+  public boolean isReady(){
+    return (getHeading().getDegrees() - 0.1 <= targetAngle && getHeading().getDegrees() - 0.1 >= targetAngle);
+  }
 }
+
+

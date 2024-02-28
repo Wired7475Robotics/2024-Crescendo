@@ -9,19 +9,15 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.PIDCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
-import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -31,9 +27,7 @@ import frc.robot.commands.climber.*;
 import frc.robot.commands.intake.*;
 import frc.robot.commands.shooter.*;
 import frc.robot.commands.swervedrive.drivebase.AbsoluteDrive;
-import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
 import frc.robot.commands.swervedrive.drivebase.AbsoluteFieldDrive;
-import frc.robot.commands.swervedrive.drivebase.TeleopDrive;
 import frc.robot.subsystems.climber.ClimberSubsystem;
 import frc.robot.subsystems.intake.DeployerSubsystem;
 import frc.robot.subsystems.intake.IntakeSubsystem;
@@ -42,7 +36,6 @@ import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.shooter.TiltSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import java.io.File;
-import javax.swing.text.html.HTMLDocument.HTMLReader.HiddenAction;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a "declarative" paradigm, very
@@ -181,24 +174,52 @@ public class RobotContainer {
     );
 
     ParallelCommandGroup fire = new ParallelCommandGroup(
-      new RunShooterTeleop(shooter),
-      new WaitCommand(2)
-        .andThen(new IndexerCommand(rollers, false, 1)),
+      new ParallelRaceGroup(
+        new RunShooterTeleop(shooter),
+        new WaitUntilCommand(() -> isReady())
+          .andThen(new IndexerCommand(rollers, true, 1))
+          .andThen(new WaitCommand(0.1)),
+        new AbsoluteDrive(
+          drivebase,
+          // Applies deadbands and inverts controls because joysticks
+          // are back-right positive while robot
+          // controls are front-left positive
+          () ->
+            MathUtil.applyDeadband(
+              -drivebase.getAxis(
+                leftDriverNunchuck.getY(),
+                leftDriverNunchuck.getRawButton(1),
+                rightDriverNunchuck.getRawButton(1)
+              ),
+              OperatorConstants.LEFT_Y_DEADBAND
+            ),
+          () ->
+            MathUtil.applyDeadband(
+              -drivebase.getAxis(
+                leftDriverNunchuck.getX(),
+                leftDriverNunchuck.getRawButton(1),
+                rightDriverNunchuck.getRawButton(1)
+              ),
+              OperatorConstants.LEFT_X_DEADBAND
+            ),
+          () -> -Math.sin(drivebase.getTargetAngle(LimelightHelpers.getTX(""))),
+          () -> -Math.cos(drivebase.getTargetAngle(LimelightHelpers.getTX("")))
+        )
+      ),
       new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
     );
-
-
 
     new JoystickButton(rightDriverNunchuck, 2)
       .onTrue((new InstantCommand(drivebase::zeroGyro)));
     new JoystickButton(operatorXbox, 1)
       .toggleOnTrue(
-        intakeCommandGroup.asProxy().finallyDo(() ->
-          CommandScheduler.getInstance().schedule(cancelIntake)
-        )
+        intakeCommandGroup
+          .asProxy()
+          .finallyDo(() -> CommandScheduler.getInstance().schedule(cancelIntake)
+          )
       );
 
-    new JoystickButton(operatorXbox, 3).toggleOnTrue(fire);
+    new JoystickButton(operatorXbox, 3).whileTrue(fire);
   }
 
   /**
@@ -223,7 +244,14 @@ public class RobotContainer {
     drivebase.setMotorBrake(brake);
   }
 
-  public void calibrateCameraAngle(){
-    SmartDashboard.putNumber("Calibration Angle",tiltDrive.calibrateCameraAngle(LimelightHelpers.getTY("")));
+  public void calibrateCameraAngle() {
+    SmartDashboard.putNumber(
+      "Calibration Angle",
+      tiltDrive.calibrateCameraAngle(LimelightHelpers.getTY(""))
+    );
+  }
+
+  public boolean isReady() {
+    return (shooter.isReady() && tiltDrive.isReady() && drivebase.isReady());
   }
 }

@@ -29,4 +29,8 @@ public class ShooterSubsystem extends SubsystemBase {
       shooterRight.setIdleMode(IdleMode.kCoast);
     }
   }
+
+  public boolean isReady(){
+    return (shooterLeft.getEncoder().getVelocity() > 4000*shooterLeft.get() && shooterRight.getEncoder().getVelocity() > 4000*shooterRight.get())? true : false;
+  }
 }

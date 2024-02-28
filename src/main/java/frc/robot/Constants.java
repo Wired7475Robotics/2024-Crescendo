@@ -7,7 +7,6 @@ package frc.robot;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj2.command.PIDCommand;
 import swervelib.math.Matter;
 import swervelib.parser.PIDFConfig;
 
@@ -49,6 +48,8 @@ public final class Constants {
     public static final double MEDIUM_SPEED = 0.75;
 
     public static final double SLOW_SPEED = 0.6;
+
+    public static final double VELOCITY_CONSTANT = 0.05;
   }
 
   public static class Intake {

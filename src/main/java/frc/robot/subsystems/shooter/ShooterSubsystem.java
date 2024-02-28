@@ -14,8 +14,8 @@ public class ShooterSubsystem extends SubsystemBase {
   CANSparkMax shooterRight = new CANSparkMax(14, MotorType.kBrushless);
 
   public ShooterSubsystem() {
-    shooterLeft.setOpenLoopRampRate(10);
-    shooterRight.setOpenLoopRampRate(10);
+    shooterLeft.setOpenLoopRampRate(2);
+    shooterRight.setOpenLoopRampRate(2);
   }
 
   public void runShooter(double speed, boolean isBreakMode, double diff) {

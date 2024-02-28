@@ -9,11 +9,17 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.PIDCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.StartEndCommand;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -66,6 +72,8 @@ public class RobotContainer {
 
   XboxController operatorXbox = new XboxController(2);
 
+  int noteStatus = OperatorConstants.FALSE;
+
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
@@ -84,7 +92,7 @@ public class RobotContainer {
         MathUtil.applyDeadband(
           -drivebase.getAxis(
             leftDriverNunchuck.getY(),
-            leftDriverNunchuck.getRawButton(0),
+            leftDriverNunchuck.getRawButton(1),
             rightDriverNunchuck.getRawButton(1)
           ),
           OperatorConstants.LEFT_Y_DEADBAND
@@ -93,7 +101,7 @@ public class RobotContainer {
         MathUtil.applyDeadband(
           -drivebase.getAxis(
             leftDriverNunchuck.getX(),
-            leftDriverNunchuck.getRawButton(0),
+            leftDriverNunchuck.getRawButton(1),
             rightDriverNunchuck.getRawButton(1)
           ),
           OperatorConstants.LEFT_X_DEADBAND
@@ -108,8 +116,8 @@ public class RobotContainer {
         MathUtil.applyDeadband(
           drivebase.getAxis(
             leftDriverNunchuck.getY(),
-            leftDriverNunchuck.getRawButton(0),
-            rightDriverNunchuck.getRawButton(0)
+            leftDriverNunchuck.getRawButton(1),
+            rightDriverNunchuck.getRawButton(1)
           ),
           OperatorConstants.LEFT_Y_DEADBAND
         ),
@@ -117,8 +125,8 @@ public class RobotContainer {
         MathUtil.applyDeadband(
           drivebase.getAxis(
             leftDriverNunchuck.getX(),
-            leftDriverNunchuck.getRawButton(0),
-            rightDriverNunchuck.getRawButton(0)
+            leftDriverNunchuck.getRawButton(1),
+            rightDriverNunchuck.getRawButton(1)
           ),
           OperatorConstants.LEFT_X_DEADBAND
         ),
@@ -129,11 +137,13 @@ public class RobotContainer {
       !RobotBase.isSimulation() ? closedAbsoluteDrive : closedFieldAbsoluteDrive
     );
 
-    TiltDrive tiltCommand = new TiltDrive(tiltDrive, operatorXbox);
+    TiltDrive tiltCommand = new TiltDrive(tiltDrive);
     ClimbCommand climbCommand = new ClimbCommand(climber, operatorXbox);
     tiltDrive.setDefaultCommand(tiltCommand);
     climber.setDefaultCommand(climbCommand);
-    intakeDeployer.setDefaultCommand(new InstantCommand(intakeDeployer::runTiltSlow, intakeDeployer));
+    intakeDeployer.setDefaultCommand(
+      new InstantCommand(intakeDeployer::runTiltSlow, intakeDeployer)
+    );
   }
 
   /**
@@ -147,26 +157,48 @@ public class RobotContainer {
     // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
     RunRollerCommand rollerCommand = new RunRollerCommand(intake, false, -0.75);
     SequentialCommandGroup intakeCommandGroup = new SequentialCommandGroup(
+      new InstantCommand(() -> noteStatus = OperatorConstants.NULL),
       new ParallelCommandGroup(
         new IntakeDeployCommand(intakeDeployer, Intake.LOW),
         rollerCommand,
-        new IndexerCommand(rollers, false, 0.75).until(rollerCommand::isFinished)
+        new IndexerCommand(rollers, false, 0.75)
+          .until(rollerCommand::isFinished)
       ),
       new ParallelCommandGroup(
         new IntakeDeployCommand(intakeDeployer, Intake.HIGH),
         new IndexerCommand(rollers, false, 0.15)
-        ),
-        new IndexerCommand(rollers, true, -0.3).withTimeout(0.2)
+      ),
+      new IndexerCommand(rollers, true, -0.3).withTimeout(0.2),
+      new InstantCommand(() -> noteStatus = OperatorConstants.TRUE)
     );
+    SequentialCommandGroup cancelIntake = new SequentialCommandGroup(
+      new ParallelCommandGroup(
+        new IndexerCommand(rollers, true, 0).withTimeout(0.1),
+        new RunRollerCommand(intake, true, 0).withTimeout(0.1),
+        new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
+      ),
+      new IntakeDeployCommand(intakeDeployer, Intake.HIGH)
+    );
+
+    ParallelCommandGroup fire = new ParallelCommandGroup(
+      new RunShooterTeleop(shooter),
+      new WaitCommand(2)
+        .andThen(new IndexerCommand(rollers, false, 1)),
+      new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
+    );
+
+
 
     new JoystickButton(rightDriverNunchuck, 2)
       .onTrue((new InstantCommand(drivebase::zeroGyro)));
     new JoystickButton(operatorXbox, 1)
-      .onTrue(
-          intakeCommandGroup
+      .toggleOnTrue(
+        intakeCommandGroup.asProxy().finallyDo(() ->
+          CommandScheduler.getInstance().schedule(cancelIntake)
+        )
       );
-    new JoystickButton(operatorXbox, 2)
-      .toggleOnTrue(new RunShooterTeleop(shooter));
+
+    new JoystickButton(operatorXbox, 3).toggleOnTrue(fire);
   }
 
   /**
@@ -189,5 +221,9 @@ public class RobotContainer {
 
   public void setMotorBrake(boolean brake) {
     drivebase.setMotorBrake(brake);
+  }
+
+  public void calibrateCameraAngle(){
+    SmartDashboard.putNumber("Calibration Angle",tiltDrive.calibrateCameraAngle(LimelightHelpers.getTY("")));
   }
 }

@@ -48,7 +48,7 @@ public final class Constants {
 
     public static final double MEDIUM_SPEED = 0.75;
 
-    public static final double SLOW_SPEED = 0.3;
+    public static final double SLOW_SPEED = 0.6;
   }
 
   public static class Intake {
@@ -81,33 +81,37 @@ public final class Constants {
     //Minimum shooter angle
     public static final double MIN_TILT = 10; //degrees
     //Maximum tilt speed
-    public static final double MAX_TILT_SPEED = 0.2;
+    public static final double MAX_TILT_SPEED = 1;
 
     public static final double TILT_CONVERSION_FACTOR = 50 / 16;
 
     public static final PIDController tiltPIDcontrol = new PIDController(
-      0.02,
+      0.015,
       0,
-      0
+      0.0002
     );
 
     public static class MathConstants {
 
-      public static final double APRIL_TAG_HEIGHT = 0;
+      public static final double APRIL_TAG_HEIGHT = 57.125;
 
-      public static final double TARGET_HEIGHT = 0;
+      public static final double TARGET_HEIGHT = 82.875;
 
-      public static final double TARGET_DISTANCE = 0;
+      public static final double TARGET_DISTANCE = 2;
 
-      public static final double SHOOTER_DISTANCE = 0;
+      public static final double SHOOTER_DISTANCE = 5.3428;
 
-      public static final double SHOOTER_HEIGHT = 0;
+      public static final double SHOOTER_HEIGHT = 6.906585;
 
-      public static final double CAMERA_HEIGHT = 0;
+      public static final double CAMERA_HEIGHT = 4.429365;
 
-      public static final double CAMERA_ANGLE = 0;
+      public static final double CAMERA_ANGLE = 19.03;
 
       public static final double GRAVITY_CONSTANT = 0.01;
+
+      public static final double CALIBRATION_DISTANCE = 60;
+
+      public static final double CALIBRATION_HEIGHT = 16;
     }
 
     public static final double STICK_DEADZONE = 0.1;
@@ -123,5 +127,13 @@ public final class Constants {
     public static final double RIGHT_X_DEADBAND = 0.01;
 
     public static final double TURN_CONSTANT = 6;
+
+    public static final int FALSE = 0;
+    
+    public static final int NULL = 1;
+
+    public static final int TRUE = 2; 
+
+    
   }
 }

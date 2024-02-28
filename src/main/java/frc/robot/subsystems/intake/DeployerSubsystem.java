@@ -39,7 +39,7 @@ public class DeployerSubsystem extends SubsystemBase {
   }
 
   public void runTiltSlow() {
-    runTilt(-0.05);
+    runTilt(-0.025);
   }
 
   public double getVelocity() {

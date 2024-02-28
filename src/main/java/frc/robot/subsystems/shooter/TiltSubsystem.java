@@ -3,13 +3,13 @@ package frc.robot.subsystems.shooter;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.CANSparkMax;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Shooter;
 import frc.robot.Constants.Shooter.MathConstants;
-import java.math.MathContext;
-import org.opencv.core.Mat;
+import frc.robot.LimelightHelpers;
 
 public class TiltSubsystem extends SubsystemBase {
 
@@ -18,9 +18,13 @@ public class TiltSubsystem extends SubsystemBase {
   // Motor for tilting the Shooter subsystem
   CANSparkMax tiltDrive = new CANSparkMax(10, MotorType.kBrushless);
 
-  double targetValue;
-
   double tiltConversionFactor;
+
+  Timer tiltTimeout = new Timer();
+  boolean timeout = true;
+  boolean filtering = false;
+  double lastDist;
+  double targetValue;
 
   public TiltSubsystem() {
     tiltConversionFactor = Constants.Shooter.TILT_CONVERSION_FACTOR;
@@ -53,17 +57,74 @@ public class TiltSubsystem extends SubsystemBase {
     return (360 * rotations) + 10;
   }
 
-  public double calculateTargetAngle(double AprilTagAngle) {
-    double distance =
-      Math.tan(AprilTagAngle + MathConstants.CAMERA_ANGLE) /
-      (MathConstants.APRIL_TAG_HEIGHT - MathConstants.CAMERA_HEIGHT);
-
-    return Math.atan(
-      (MathConstants.TARGET_HEIGHT - MathConstants.SHOOTER_HEIGHT) /
-      (MathConstants.TARGET_DISTANCE + MathConstants.SHOOTER_DISTANCE) +
-      distance -
-      (distance * MathConstants.GRAVITY_CONSTANT)
+  public double calculateTargetAngle(double aprilTagAngle) {
+    double distance = Math.sqrt(
+      Math.pow(
+        (MathConstants.APRIL_TAG_HEIGHT - MathConstants.CAMERA_HEIGHT) /
+        Math.tan(Math.toRadians(aprilTagAngle + MathConstants.CAMERA_ANGLE)),
+        2
+      )
     );
+    double newTargetValue = Math.toDegrees(
+      Math.atan(
+        (MathConstants.TARGET_HEIGHT - MathConstants.SHOOTER_HEIGHT) /
+        (
+          MathConstants.TARGET_DISTANCE +
+          MathConstants.SHOOTER_DISTANCE +
+          distance -
+          (distance * MathConstants.GRAVITY_CONSTANT)
+        )
+      )
+    );
+
+    if (
+      (Math.abs(targetValue - newTargetValue) > 20 || aprilTagAngle == 0) &&
+      !timeout
+    ) {
+      if (!filtering) {
+        filtering = true;
+        tiltTimeout.start();
+      }
+      if (tiltTimeout.get() > 0.5) {
+        filtering = false;
+        timeout = true;
+        tiltTimeout.stop();
+        tiltTimeout.reset();
+      }
+      return targetValue;
+    }
+
+    targetValue =
+      Math.min(Shooter.MAX_TILT, Math.max(Shooter.MIN_TILT, newTargetValue));
+    System.out.println(distance + "," + newTargetValue);
+    if (timeout && aprilTagAngle == 0) {
+      return Shooter.MAX_TILT;
+    }
+
+    timeout = false;
+
+    lastDist = distance;
+
+    return targetValue;
+  }
+
+  public double calibrateCameraAngle(double aprilTagAngle) {
+    return (
+      Math.toDegrees(
+        Math.atan2(
+          MathConstants.CALIBRATION_HEIGHT,
+          MathConstants.CALIBRATION_DISTANCE
+        )
+      ) -
+      aprilTagAngle
+    );
+  }
+
+  public boolean isTiltReady() {
+    if (timeout && lastDist < 150) {
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -82,9 +143,8 @@ public class TiltSubsystem extends SubsystemBase {
       )
     ) {
       targetValue = targetValue - stickaxis;
-    } else {
-      System.out.println("Shooter tried to go oudside of its bounds");
     }
+
     return targetValue;
   }
 

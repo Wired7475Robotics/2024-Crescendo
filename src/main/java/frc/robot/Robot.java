@@ -118,7 +118,6 @@ public class Robot extends TimedRobot {
     }
     m_robotContainer.setDriveMode();
     m_robotContainer.setMotorBrake(true);
-    m_robotContainer.setShooterCommand();
   }
 
   /**
@@ -143,6 +142,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void testPeriodic() {
+    // Calculate the camera angle, and push it to the SmartDashboard for use
     m_robotContainer.calibrateCameraAngle();
   }
 

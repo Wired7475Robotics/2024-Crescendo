@@ -28,12 +28,9 @@ import frc.robot.commands.intake.*;
 import frc.robot.commands.shooter.*;
 import frc.robot.commands.swervedrive.drivebase.AbsoluteDrive;
 import frc.robot.commands.swervedrive.drivebase.AbsoluteFieldDrive;
-import frc.robot.subsystems.climber.ClimberSubsystem;
-import frc.robot.subsystems.intake.DeployerSubsystem;
-import frc.robot.subsystems.intake.IntakeSubsystem;
-import frc.robot.subsystems.shooter.RollerSubsystem;
-import frc.robot.subsystems.shooter.ShooterSubsystem;
-import frc.robot.subsystems.shooter.TiltSubsystem;
+import frc.robot.subsystems.climber.*;
+import frc.robot.subsystems.intake.*;
+import frc.robot.subsystems.shooter.*;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import java.io.File;
 
@@ -50,13 +47,13 @@ public class RobotContainer {
   );
   private static final ShooterSubsystem shooter = new ShooterSubsystem();
 
-  private static final RollerSubsystem rollers = new RollerSubsystem();
+  private static final IndexerSubsystem indexer = new IndexerSubsystem();
 
   private static final IntakeSubsystem intake = new IntakeSubsystem();
 
   private static final ClimberSubsystem climber = new ClimberSubsystem();
 
-  private static final TiltSubsystem tiltDrive = new TiltSubsystem();
+  private static final PivotSubsystem pivot = new PivotSubsystem();
 
   private static final DeployerSubsystem intakeDeployer = new DeployerSubsystem();
 
@@ -73,8 +70,9 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the trigger bindings
     configureBindings();
+    // reset encoders for climber and pivot subsystems
     climber.resetEncoders();
-    tiltDrive.resetTiltEncoder();
+    pivot.resetTiltEncoder();
 
     AbsoluteDrive closedAbsoluteDrive = new AbsoluteDrive(
       drivebase,
@@ -102,7 +100,6 @@ public class RobotContainer {
       () -> -rightDriverNunchuck.getX(),
       () -> -rightDriverNunchuck.getY()
     );
-
     AbsoluteFieldDrive closedFieldAbsoluteDrive = new AbsoluteFieldDrive(
       drivebase,
       () ->
@@ -126,16 +123,17 @@ public class RobotContainer {
       () -> rightDriverNunchuck.getY()
     );
 
+    // Set the default commands for the subsystems
     drivebase.setDefaultCommand(
       !RobotBase.isSimulation() ? closedAbsoluteDrive : closedFieldAbsoluteDrive
     );
 
-    TiltDrive tiltCommand = new TiltDrive(tiltDrive);
-    ClimbCommand climbCommand = new ClimbCommand(climber, operatorXbox);
-    tiltDrive.setDefaultCommand(tiltCommand);
+    PivotCommand tiltCommand = new PivotCommand(pivot);
+    ClimberCommand climbCommand = new ClimberCommand(climber, operatorXbox);
+    pivot.setDefaultCommand(tiltCommand);
     climber.setDefaultCommand(climbCommand);
     intakeDeployer.setDefaultCommand(
-      new InstantCommand(intakeDeployer::runTiltSlow, intakeDeployer)
+      new InstantCommand(intakeDeployer::runSlow, intakeDeployer)
     );
   }
 
@@ -147,37 +145,48 @@ public class RobotContainer {
    * controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight joysticks}.
    */
   private void configureBindings() {
-    // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
-    RunRollerCommand rollerCommand = new RunRollerCommand(intake, false, -0.75);
+    // Setup command sequences
+
+    // Command sequence for intaking and storeing note
     SequentialCommandGroup intakeCommandGroup = new SequentialCommandGroup(
       new InstantCommand(() -> noteStatus = OperatorConstants.NULL),
+      // Deploy intake and start intake and indexer
       new ParallelCommandGroup(
-        new IntakeDeployCommand(intakeDeployer, Intake.LOW),
-        rollerCommand,
-        new IndexerCommand(rollers, false, 0.75)
-          .until(rollerCommand::isFinished)
+        new DeployerCommand(intakeDeployer, Intake.LOW),
+        new ParallelRaceGroup(
+          new IntakeCommand(intake, false, -0.75),
+          new IndexerCommand(indexer, false, 0.75)
+        )
       ),
+      // Stow intake and stop intake and slow indexer
       new ParallelCommandGroup(
-        new IntakeDeployCommand(intakeDeployer, Intake.HIGH),
-        new IndexerCommand(rollers, false, 0.15)
+        new DeployerCommand(intakeDeployer, Intake.HIGH),
+        new IndexerCommand(indexer, false, 0.15)
       ),
-      new IndexerCommand(rollers, true, -0.3).withTimeout(0.2),
+      // run indexer backwardsand set the status to true to tell the robot that the note is stored
+      new IndexerCommand(indexer, true, -0.3).withTimeout(0.2),
       new InstantCommand(() -> noteStatus = OperatorConstants.TRUE)
     );
+
+    // Command sequence for canceling intake command
     SequentialCommandGroup cancelIntake = new SequentialCommandGroup(
+      // Stop intake and stop indexer and tell the robot that the note is not stored
       new ParallelCommandGroup(
-        new IndexerCommand(rollers, true, 0).withTimeout(0.1),
-        new RunRollerCommand(intake, true, 0).withTimeout(0.1),
+        new IndexerCommand(indexer, true, 0).withTimeout(0.1),
+        new IntakeCommand(intake, true, 0).withTimeout(0.1),
         new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
       ),
-      new IntakeDeployCommand(intakeDeployer, Intake.HIGH)
+      // Stow intake
+      new DeployerCommand(intakeDeployer, Intake.HIGH)
     );
 
+    // Command sequence for firing the note
     ParallelCommandGroup fire = new ParallelCommandGroup(
       new ParallelRaceGroup(
-        new RunShooterTeleop(shooter),
+        // run shooter and wait until shooter is ready and robot is aimed at the target then run indexer
+        new ShooterCommand(shooter, 1, 0.1),
         new WaitUntilCommand(() -> isReady())
-          .andThen(new IndexerCommand(rollers, true, 1))
+          .andThen(new IndexerCommand(indexer, true, 1))
           .andThen(new WaitCommand(0.1)),
         new AbsoluteDrive(
           drivebase,
@@ -206,20 +215,29 @@ public class RobotContainer {
           () -> -Math.cos(drivebase.getTargetAngle(LimelightHelpers.getTX("")))
         )
       ),
+      // tell the robot that the note is not stored
       new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
     );
 
-    new JoystickButton(rightDriverNunchuck, 2)
-      .onTrue((new InstantCommand(drivebase::zeroGyro)));
+    // bind command sequences to buttons
+
+    // if the note is not stored, run intake command sequence. if the intake command sequence is running, cancel the intake command sequence
     new JoystickButton(operatorXbox, 1)
       .toggleOnTrue(
         intakeCommandGroup
+          .onlyIf(() -> noteStatus == OperatorConstants.FALSE)
           .asProxy()
-          .finallyDo(() -> CommandScheduler.getInstance().schedule(cancelIntake)
+          .finallyDo(() ->
+            CommandScheduler
+              .getInstance()
+              .schedule(
+                cancelIntake.onlyIf(() -> noteStatus == OperatorConstants.NULL)
+              )
           )
       );
-
-    new JoystickButton(operatorXbox, 3).whileTrue(fire);
+    // if the note is stored, run fire command sequence
+    new JoystickButton(operatorXbox, 3)
+      .whileTrue(fire.onlyIf(() -> noteStatus == OperatorConstants.TRUE));
   }
 
   /**
@@ -228,16 +246,11 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    // An example command will be run in autonomous
     return drivebase.getAutonomousCommand("Debug Path", true);
   }
 
   public void setDriveMode() {
     drivebase.setDefaultCommand(drivebase.getDefaultCommand());
-  }
-
-  public void setShooterCommand() {
-    //shooter.setDefaultCommand();
   }
 
   public void setMotorBrake(boolean brake) {
@@ -247,11 +260,11 @@ public class RobotContainer {
   public void calibrateCameraAngle() {
     SmartDashboard.putNumber(
       "Calibration Angle",
-      tiltDrive.calibrateCameraAngle(LimelightHelpers.getTY(""))
+      pivot.calibrateCameraAngle(LimelightHelpers.getTY(""))
     );
   }
 
   public boolean isReady() {
-    return (shooter.isReady() && tiltDrive.isReady() && drivebase.isReady());
+    return (shooter.isReady() && pivot.isReady() && drivebase.isReady());
   }
 }

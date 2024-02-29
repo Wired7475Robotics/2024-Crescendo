@@ -467,7 +467,7 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   public double getTargetAngle(double aprilTagAngle){
-    targetAngle = getHeading().getDegrees() + aprilTagAngle + (aprilTagAngle*Drivebase.VELOCITY_CONSTANT);
+    targetAngle = getHeading().getDegrees() + aprilTagAngle + (getFieldVelocity().vyMetersPerSecond * Drivebase.VELOCITY_CONSTANT);
      return targetAngle;
   }
 

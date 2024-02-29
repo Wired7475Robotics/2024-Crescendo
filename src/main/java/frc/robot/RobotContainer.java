@@ -130,7 +130,7 @@ public class RobotContainer {
 
     PivotCommand tiltCommand = new PivotCommand(
       pivot,
-      (() -> drivebase.getRobotVelocity().getX())
+      (() -> drivebase.getRobotVelocity().vxMetersPerSecond)
     );
     ClimberCommand climbCommand = new ClimberCommand(climber, operatorXbox);
     pivot.setDefaultCommand(tiltCommand);

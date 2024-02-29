@@ -83,7 +83,10 @@ public class PivotSubsystem extends SubsystemBase {
    * @param aprilTagAngle The angle of the AprilTag (y axis).
    * @return The tilt angle in radians.
    */
-  public double calculateTargetAngle(double aprilTagAngle) {
+  public double calculateTargetAngle(
+    double aprilTagAngle,
+    double robotVelocity
+  ) {
     // Calculate the distance to the target
     double distance = Math.sqrt(
       Math.pow(
@@ -100,7 +103,8 @@ public class PivotSubsystem extends SubsystemBase {
           MathConstants.TARGET_DISTANCE +
           MathConstants.SHOOTER_DISTANCE +
           distance -
-          (distance * MathConstants.GRAVITY_CONSTANT)
+          (distance * MathConstants.GRAVITY_CONSTANT) -
+          (robotVelocity * MathConstants.VELOCITY_CONSTANT)
         )
       )
     );

@@ -128,7 +128,10 @@ public class RobotContainer {
       !RobotBase.isSimulation() ? closedAbsoluteDrive : closedFieldAbsoluteDrive
     );
 
-    PivotCommand tiltCommand = new PivotCommand(pivot);
+    PivotCommand tiltCommand = new PivotCommand(
+      pivot,
+      (() -> drivebase.getRobotVelocity().getX())
+    );
     ClimberCommand climbCommand = new ClimberCommand(climber, operatorXbox);
     pivot.setDefaultCommand(tiltCommand);
     climber.setDefaultCommand(climbCommand);

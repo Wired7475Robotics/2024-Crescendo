@@ -122,6 +122,8 @@ public final class Constants {
 
       public static final double GRAVITY_CONSTANT = 0.01; // arbitrary unit
 
+      public static final double VELOCITY_CONSTANT = 0; // arbitrary unit
+
       public static final double CALIBRATION_DISTANCE = 60; // inches
 
       public static final double CALIBRATION_HEIGHT = 16; // inches

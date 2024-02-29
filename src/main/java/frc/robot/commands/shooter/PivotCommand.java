@@ -14,13 +14,17 @@ public class PivotCommand extends Command {
   XboxController ControllerAxis;
   double target;
   boolean useCamera = true;
+  DoubleSupplier velocitySupplier;
 
   /**
    * Constructor for the PivotCommand class.
    *
    * @param tiltSubsystem The tilt subsystem to use.
    */
-  public PivotCommand(PivotSubsystem tiltSubsystem) {
+  public PivotCommand(
+    PivotSubsystem tiltSubsystem,
+    DoubleSupplier velocitySupplier
+  ) {
     // set the pivotSubsystem to the tiltSubsystem
     this.pivotSubsystem = tiltSubsystem;
     // add the tiltSubsystem to the requirements
@@ -29,6 +33,7 @@ public class PivotCommand extends Command {
     pivotPidController = Constants.Shooter.pivotPidController;
     // set the useCamera to true
     useCamera = true;
+    this.velocitySupplier = velocitySupplier;
   }
 
   public PivotCommand(PivotSubsystem tiltSubsystem, double targetAngle) {
@@ -55,7 +60,11 @@ public class PivotCommand extends Command {
       // get the target angle from the Limelight
       double aprilTagAngle = LimelightHelpers.getTY("");
       // calculate the target angle from the pivotSubsystem
-      target = pivotSubsystem.calculateTargetAngle(aprilTagAngle);
+      target =
+        pivotSubsystem.calculateTargetAngle(
+          aprilTagAngle,
+          velocitySupplier.getAsDouble()
+        );
     }
     // set the pivotPidController setpoint to the target
     pivotPidController.setSetpoint(target);

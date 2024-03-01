@@ -187,7 +187,7 @@ public class RobotContainer {
     ParallelCommandGroup fire = new ParallelCommandGroup(
       new ParallelRaceGroup(
         // run shooter and wait until shooter is ready and robot is aimed at the target then run indexer
-        new ShooterCommand(shooter, 1, 0.1),
+        new ShooterCommand(shooter, -0.4, -0.2),
         new WaitUntilCommand(() -> isReady())
           .andThen(new IndexerCommand(indexer, true, 1))
           .andThen(new WaitCommand(0.1)),
@@ -240,7 +240,7 @@ public class RobotContainer {
       );
     // if the note is stored, run fire command sequence
     new JoystickButton(operatorXbox, 3)
-      .whileTrue(fire.onlyIf(() -> noteStatus == OperatorConstants.TRUE));
+      .whileTrue(fire); //.onlyIf(() -> noteStatus == OperatorConstants.TRUE
   }
 
   /**

@@ -88,13 +88,9 @@ public class PivotSubsystem extends SubsystemBase {
     double robotVelocity
   ) {
     // Calculate the distance to the target
-    double distance = Math.sqrt(
-      Math.pow(
+    double distance = 
         (MathConstants.APRIL_TAG_HEIGHT - MathConstants.CAMERA_HEIGHT) /
-        Math.tan(Math.toRadians(aprilTagAngle + MathConstants.CAMERA_ANGLE)),
-        2
-      )
-    );
+        Math.tan(Math.toRadians(aprilTagAngle + MathConstants.CAMERA_ANGLE));
     // Calculate the new target value
     double newTargetValue = Math.toDegrees(
       Math.atan(

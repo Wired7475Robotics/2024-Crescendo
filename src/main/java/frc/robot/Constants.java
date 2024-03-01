@@ -7,6 +7,8 @@ package frc.robot;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import swervelib.math.Matter;
 import swervelib.parser.PIDFConfig;
 
@@ -58,7 +60,7 @@ public final class Constants {
 
     // Intake motor speed constants
     public static final double INTAKE_SPEED = 1; // percentage
-
+    
     // Intake deploy conversion factor
     public static final double INTAKE_CONVERSION_FACTOR = 53.125; // 25/16*34, degrees per rotation
 

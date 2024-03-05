@@ -103,22 +103,16 @@ public class RobotContainer {
     AbsoluteFieldDrive closedFieldAbsoluteDrive = new AbsoluteFieldDrive(
       drivebase,
       () ->
-        MathUtil.applyDeadband(
-          drivebase.getAxis(
-            leftDriverNunchuck.getY(),
-            leftDriverNunchuck.getRawButton(1),
-            rightDriverNunchuck.getRawButton(1)
-          ),
-          OperatorConstants.LEFT_Y_DEADBAND
+        drivebase.getAxis(
+          leftDriverNunchuck.getY(),
+          leftDriverNunchuck.getRawButton(1),
+          rightDriverNunchuck.getRawButton(1)
         ),
       () ->
-        MathUtil.applyDeadband(
-          drivebase.getAxis(
-            leftDriverNunchuck.getX(),
-            leftDriverNunchuck.getRawButton(1),
-            rightDriverNunchuck.getRawButton(1)
-          ),
-          OperatorConstants.LEFT_X_DEADBAND
+        drivebase.getAxis(
+          leftDriverNunchuck.getX(),
+          leftDriverNunchuck.getRawButton(1),
+          rightDriverNunchuck.getRawButton(1)
         ),
       () -> rightDriverNunchuck.getY()
     );
@@ -187,36 +181,33 @@ public class RobotContainer {
     ParallelCommandGroup fire = new ParallelCommandGroup(
       new ParallelRaceGroup(
         // run shooter and wait until shooter is ready and robot is aimed at the target then run indexer
-        new ShooterCommand(shooter, -0.4, -0.2),
-        new WaitUntilCommand(() -> isReady())
+        new ShooterCommand(shooter, -1.0, -0.325),
+        new WaitCommand(5)
           .andThen(new IndexerCommand(indexer, true, 1))
-          .andThen(new WaitCommand(0.1)),
-        new AbsoluteDrive(
-          drivebase,
-          // Applies deadbands and inverts controls because joysticks
-          // are back-right positive while robot
-          // controls are front-left positive
+          .andThen(new WaitCommand(0.1))
+      ),
+      new AbsoluteFieldDrive(
+        drivebase,
+        // Applies deadbands and inverts controls because joysticks
+        // are back-right positive while robot
+        // controls are front-left positive
+        (
           () ->
-            MathUtil.applyDeadband(
-              -drivebase.getAxis(
-                leftDriverNunchuck.getY(),
-                leftDriverNunchuck.getRawButton(1),
-                rightDriverNunchuck.getRawButton(1)
-              ),
-              OperatorConstants.LEFT_Y_DEADBAND
-            ),
+            -drivebase.getAxis(
+              leftDriverNunchuck.getY(),
+              leftDriverNunchuck.getRawButton(1),
+              rightDriverNunchuck.getRawButton(1)
+            )
+        ),
+        (
           () ->
-            MathUtil.applyDeadband(
-              -drivebase.getAxis(
-                leftDriverNunchuck.getX(),
-                leftDriverNunchuck.getRawButton(1),
-                rightDriverNunchuck.getRawButton(1)
-              ),
-              OperatorConstants.LEFT_X_DEADBAND
-            ),
-          () -> -Math.sin(drivebase.getTargetAngle(LimelightHelpers.getTX(""))),
-          () -> -Math.cos(drivebase.getTargetAngle(LimelightHelpers.getTX("")))
-        )
+            -drivebase.getAxis(
+              leftDriverNunchuck.getX(),
+              leftDriverNunchuck.getRawButton(1),
+              rightDriverNunchuck.getRawButton(1)
+            )
+        ),
+        (() -> drivebase.getTargetAngle(LimelightHelpers.getTX("")))
       ),
       // tell the robot that the note is not stored
       new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
@@ -239,8 +230,9 @@ public class RobotContainer {
           )
       );
     // if the note is stored, run fire command sequence
-    new JoystickButton(operatorXbox, 3)
-      .whileTrue(fire); //.onlyIf(() -> noteStatus == OperatorConstants.TRUE
+    new JoystickButton(operatorXbox, 3).whileTrue(fire); //.onlyIf(() -> noteStatus == OperatorConstants.TRUE
+
+    new JoystickButton(rightDriverNunchuck, 2).onTrue(new InstantCommand(drivebase::zeroGyro));
   }
 
   /**
@@ -249,7 +241,7 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return drivebase.getAutonomousCommand("Debug Path", true);
+    return drivebase.getAutonomousCommand("Debug", true);
   }
 
   public void setDriveMode() {
@@ -268,6 +260,11 @@ public class RobotContainer {
   }
 
   public boolean isReady() {
-    return (shooter.isReady() && pivot.isReady() && drivebase.isReady());
+    boolean ready =
+      (shooter.isReady() && pivot.isReady() && drivebase.isReady());
+    System.out.println(
+      pivot.isReady() + ", " + drivebase.isReady() + ", " + ready
+    );
+    return ready;
   }
 }

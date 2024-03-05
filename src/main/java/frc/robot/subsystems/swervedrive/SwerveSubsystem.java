@@ -18,10 +18,12 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.Drivebase;
-
+import frc.robot.LimelightHelpers;
 import java.io.File;
 import java.util.function.DoubleSupplier;
 import swervelib.SwerveController;
@@ -263,6 +265,7 @@ public class SwerveSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
+    SmartDashboard.putNumber("Swerve Target Angle", -targetAngle);
     SwerveModule[] rawModules = swerveDrive.getModules();
     for (int i = 0; i < 4; i++) {
       absPos[i] =
@@ -462,18 +465,22 @@ public class SwerveSubsystem extends SubsystemBase {
     );
   }
 
-  public double getAxis(double axis, boolean slow, boolean fast){
-      return slow? axis * Drivebase.SLOW_SPEED : fast? axis * Drivebase.FAST_SPEED : axis * Drivebase.MEDIUM_SPEED;
+  public double getAxis(double axis, boolean slow, boolean fast) {
+    return slow
+      ? axis * Drivebase.SLOW_SPEED
+      : fast ? axis * Drivebase.FAST_SPEED : axis * Drivebase.MEDIUM_SPEED;
   }
 
-  public double getTargetAngle(double aprilTagAngle){
-    targetAngle = getHeading().getDegrees() + aprilTagAngle + (getFieldVelocity().vyMetersPerSecond * Drivebase.VELOCITY_CONSTANT);
-     return targetAngle;
+  public double getTargetAngle(double aprilTagAngle) {
+    targetAngle =
+      getHeading().getDegrees() -
+      aprilTagAngle;
+    return targetAngle / 180;
   }
 
-  public boolean isReady(){
-    return (getHeading().getDegrees() - 0.1 <= targetAngle && getHeading().getDegrees() - 0.1 >= targetAngle);
+  public boolean isReady() {
+    return (
+      true //Math.abs(getHeading().getDegrees() - targetAngle) <= 5
+    );
   }
 }
-
-

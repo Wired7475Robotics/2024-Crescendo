@@ -2,8 +2,11 @@ package frc.robot.subsystems.shooter;
 
 import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.CANSparkMax;
+
+import edu.wpi.first.units.Voltage;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -28,6 +31,12 @@ public class PivotSubsystem extends SubsystemBase {
   double lastDist;
   // Target value for the tilt angle
   double targetValue;
+
+  double  voltCountIterations;
+
+  double totalVoltage;
+
+  double avgVoltage;
 
   /**
    * Constructor for the TiltSubsystem class.
@@ -88,21 +97,44 @@ public class PivotSubsystem extends SubsystemBase {
     double robotVelocity
   ) {
     // Calculate the distance to the target
-    double distance = 
-        (MathConstants.APRIL_TAG_HEIGHT - MathConstants.CAMERA_HEIGHT) /
-        Math.tan(Math.toRadians(aprilTagAngle + MathConstants.CAMERA_ANGLE));
+    double distance =
+      (MathConstants.APRIL_TAG_HEIGHT) /
+      Math.tan(
+        Math.toRadians(aprilTagAngle + Shooter.MathConstants.CAMERA_ANGLE)
+      );
+
     // Calculate the new target value
     double newTargetValue = Math.toDegrees(
-      Math.atan(
-        (MathConstants.TARGET_HEIGHT - MathConstants.SHOOTER_HEIGHT) /
+      Math.atan2(
+        (
+          MathConstants.TARGET_HEIGHT -
+          MathConstants.SHOOTER_HEIGHT +
+          (-1/Math.pow(distance, MathConstants.GRAVITY_CONSTANT)+1) 
+          
+        ),
         (
           MathConstants.TARGET_DISTANCE +
           MathConstants.SHOOTER_DISTANCE +
-          distance -
-          (distance * MathConstants.GRAVITY_CONSTANT) -
-          (robotVelocity * MathConstants.VELOCITY_CONSTANT)
+          distance +
+          (robotVelocity * MathConstants.VELOCITY_CONSTANT) + 
+          (avgVoltage*MathConstants.VOLTAGE_CONSTANT)
         )
       )
+    );
+    SmartDashboard.putNumber("dist", distance);
+    SmartDashboard.putNumber(
+      "height",
+      (
+        MathConstants.TARGET_HEIGHT +
+        (distance * MathConstants.GRAVITY_CONSTANT)
+      )
+    );
+    SmartDashboard.putNumber(
+      "calcdist",
+      MathConstants.TARGET_DISTANCE +
+      MathConstants.SHOOTER_DISTANCE +
+      distance +
+      (robotVelocity * MathConstants.VELOCITY_CONSTANT)
     );
     // If the difference between the new target value and the current target value is greater than 20, or the AprilTag angle is 0 (the limelight likely does not see an apriltag), and the timeout is not active, start filtering april tag angle to avoid sudden changes in the tilt angle
     if (
@@ -173,7 +205,7 @@ public class PivotSubsystem extends SubsystemBase {
    */
   public boolean isReady() {
     // If the timeout is active and the last distance is greater than the maximum distance, or the filtering is active, return false
-    if ((timeout && lastDist > Shooter.MAX_DISTANCE) || filtering) {
+    if ((timeout && lastDist < Shooter.MAX_DISTANCE)) {
       return false;
     }
     return true;
@@ -216,5 +248,8 @@ public class PivotSubsystem extends SubsystemBase {
       "ShooterTilt Error",
       getTiltDegrees() - targetValue
     );
+    voltCountIterations ++;
+    totalVoltage += tiltDrive.getBusVoltage();
+    avgVoltage = totalVoltage/voltCountIterations;
   }
 }

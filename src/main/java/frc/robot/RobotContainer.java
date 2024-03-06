@@ -5,54 +5,79 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
+import edu.wpi.first.wpilibj2.command.RepeatCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants.Drivebase;
+import frc.robot.Constants.Intake;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
+import frc.robot.Constants.Shooter;
+import frc.robot.Util.FieldElements;
+import frc.robot.commands.climber.*;
+import frc.robot.commands.intake.*;
+import frc.robot.commands.shooter.*;
+import frc.robot.commands.swervedrive.drivebase.AbsoluteFieldDrive;
+import frc.robot.subsystems.climber.*;
+import frc.robot.subsystems.intake.*;
+import frc.robot.subsystems.shooter.*;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import java.io.File;
+import java.lang.reflect.Field;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a "declarative" paradigm, very
  * little robot logic should actually be handled in the {@link Robot} periodic methods (other than the scheduler calls).
  * Instead, the structure of the robot (including subsystems, commands, and trigger mappings) should be declared here.
  */
-public class RobotContainer
-{
+public class RobotContainer {
 
   // The robot's subsystems and commands are defined here...
-  private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
-                                                                         "swerve/neo"));
+  private final SwerveSubsystem drivebase = new SwerveSubsystem(
+    new File(Filesystem.getDeployDirectory(), "swerve")
+  );
+  private static final ShooterSubsystem shooter = new ShooterSubsystem();
 
-  // Replace with CommandPS4Controller or CommandJoystick if needed
-  final CommandXboxController driverXbox = new CommandXboxController(0);
+  private static final IndexerSubsystem indexer = new IndexerSubsystem();
+
+  private static final IntakeSubsystem intake = new IntakeSubsystem();
+
+  private static final ClimberSubsystem climber = new ClimberSubsystem();
+
+  private static final PivotSubsystem pivot = new PivotSubsystem();
+
+  private static final DeployerSubsystem intakeDeployer = new DeployerSubsystem();
+
+  Joystick leftDriverNunchuck = new Joystick(0);
+  Joystick rightDriverNunchuck = new Joystick(1);
+
+  XboxController operatorXbox = new XboxController(2);
+
+  int noteStatus = OperatorConstants.FALSE;
+
+  Timer pivotTimer = new Timer();
+  Timer driveTimer = new Timer();
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
-  public RobotContainer()
-  {
+  public RobotContainer() {
     // Configure the trigger bindings
     configureBindings();
-
-    AbsoluteDriveAdv closedAbsoluteDriveAdv = new AbsoluteDriveAdv(drivebase,
-                                                                   () -> -MathUtil.applyDeadband(driverXbox.getLeftY(),
-                                                                                                OperatorConstants.LEFT_Y_DEADBAND),
-                                                                   () -> -MathUtil.applyDeadband(driverXbox.getLeftX(),
-                                                                                                OperatorConstants.LEFT_X_DEADBAND),
-                                                                   () -> -MathUtil.applyDeadband(driverXbox.getRightX(),
-                                                                                                OperatorConstants.RIGHT_X_DEADBAND),
-                                                                   driverXbox.getHID()::getYButtonPressed,
-                                                                   driverXbox.getHID()::getAButtonPressed,
-                                                                   driverXbox.getHID()::getXButtonPressed,
-                                                                   driverXbox.getHID()::getBButtonPressed);
+    drivebase.zeroGyro();
 
     // Applies deadbands and inverts controls because joysticks
     // are back-right positive while robot
@@ -60,28 +85,69 @@ public class RobotContainer
     // left stick controls translation
     // right stick controls the desired angle NOT angular rotation
     Command driveFieldOrientedDirectAngle = drivebase.driveCommand(
-        () -> MathUtil.applyDeadband(driverXbox.getLeftY(), OperatorConstants.LEFT_Y_DEADBAND),
-        () -> MathUtil.applyDeadband(driverXbox.getLeftX(), OperatorConstants.LEFT_X_DEADBAND),
-        () -> driverXbox.getRightX(),
-        () -> driverXbox.getRightY());
-
-    // Applies deadbands and inverts controls because joysticks
-    // are back-right positive while robot
-    // controls are front-left positive
-    // left stick controls translation
-    // right stick controls the angular velocity of the robot
-    Command driveFieldOrientedAnglularVelocity = drivebase.driveCommand(
-        () -> MathUtil.applyDeadband(driverXbox.getLeftY(), OperatorConstants.LEFT_Y_DEADBAND),
-        () -> MathUtil.applyDeadband(driverXbox.getLeftX(), OperatorConstants.LEFT_X_DEADBAND),
-        () -> driverXbox.getRightX() * 0.5);
+      () ->
+        MathUtil.applyDeadband(
+          drivebase.getAxis(
+            leftDriverNunchuck.getY(),
+            leftDriverNunchuck.getRawButton(1),
+            rightDriverNunchuck.getRawButton(1)
+          ),
+          OperatorConstants.LEFT_Y_DEADBAND
+        ),
+      () ->
+        MathUtil.applyDeadband(
+          drivebase.getAxis(
+            leftDriverNunchuck.getX(),
+            leftDriverNunchuck.getRawButton(1),
+            rightDriverNunchuck.getRawButton(1)
+          ),
+          OperatorConstants.LEFT_X_DEADBAND
+        ),
+      () -> rightDriverNunchuck.getX(),
+      () -> rightDriverNunchuck.getY()
+    );
 
     Command driveFieldOrientedDirectAngleSim = drivebase.simDriveCommand(
-        () -> MathUtil.applyDeadband(driverXbox.getLeftY(), OperatorConstants.LEFT_Y_DEADBAND),
-        () -> MathUtil.applyDeadband(driverXbox.getLeftX(), OperatorConstants.LEFT_X_DEADBAND),
-        () -> driverXbox.getRawAxis(2));
+      () ->
+        MathUtil.applyDeadband(
+          drivebase.getAxis(
+            leftDriverNunchuck.getY(),
+            leftDriverNunchuck.getRawButton(1),
+            rightDriverNunchuck.getRawButton(1)
+          ),
+          OperatorConstants.LEFT_Y_DEADBAND
+        ),
+      () ->
+        MathUtil.applyDeadband(
+          drivebase.getAxis(
+            leftDriverNunchuck.getX(),
+            leftDriverNunchuck.getRawButton(1),
+            rightDriverNunchuck.getRawButton(1)
+          ),
+          OperatorConstants.LEFT_X_DEADBAND
+        ),
+      () -> rightDriverNunchuck.getRawAxis(2)
+    );
 
     drivebase.setDefaultCommand(
-        !RobotBase.isSimulation() ? driveFieldOrientedDirectAngle : driveFieldOrientedDirectAngleSim);
+      !RobotBase.isSimulation()
+        ? driveFieldOrientedDirectAngle
+        : driveFieldOrientedDirectAngleSim
+    );
+
+    drivebase.getRelativeInterpolatedPosition(
+      pivotTimer,
+      0.1,
+      FieldElements.kSpeakerCenterBlue,
+      FieldElements.kSpeakerCenterRed
+    );
+    PivotCommand tiltCommand = new PivotCommand(pivot, Shooter.MAX_TILT);
+    ClimberCommand climbCommand = new ClimberCommand(climber, operatorXbox);
+    pivot.setDefaultCommand(tiltCommand);
+    climber.setDefaultCommand(climbCommand);
+    intakeDeployer.setDefaultCommand(
+      new InstantCommand(intakeDeployer::runSlow, intakeDeployer)
+    );
   }
 
   /**
@@ -91,17 +157,160 @@ public class RobotContainer
    * {@link CommandXboxController Xbox}/{@link edu.wpi.first.wpilibj2.command.button.CommandPS4Controller PS4}
    * controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight joysticks}.
    */
-  private void configureBindings()
-  {
+  private void configureBindings() {
     // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
 
-    driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
-    driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
-    driverXbox.b().whileTrue(
-        Commands.deferredProxy(() -> drivebase.driveToPose(
-                                   new Pose2d(new Translation2d(4, 4), Rotation2d.fromDegrees(0)))
-                              ));
-    // driverXbox.x().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
+    climber.resetEncoders();
+    pivot.resetTiltEncoder();
+
+    new JoystickButton(rightDriverNunchuck, 2)
+      .onTrue((Commands.runOnce(drivebase::zeroGyro)));
+
+    // Setup command sequences
+
+    // Command sequence for intaking and storeing note
+    SequentialCommandGroup intakeCommandGroup = new SequentialCommandGroup(
+      new InstantCommand(() -> noteStatus = OperatorConstants.NULL),
+      // Deploy intake and start intake and indexer
+      new ParallelCommandGroup(
+        new DeployerCommand(intakeDeployer, Intake.LOW),
+        new ParallelRaceGroup(
+          new IntakeCommand(intake, false, -0.75),
+          new IndexerCommand(indexer, false, 0.75)
+        )
+      ),
+      // Stow intake and stop intake and slow indexer
+      new ParallelCommandGroup(
+        new DeployerCommand(intakeDeployer, Intake.HIGH),
+        new IndexerCommand(indexer, false, 0.15)
+      ),
+      // run indexer backwardsand set the status to true to tell the robot that the note is stored
+      new IndexerCommand(indexer, true, -0.3).withTimeout(0.2),
+      new InstantCommand(() -> noteStatus = OperatorConstants.TRUE)
+    );
+
+    // Command sequence for canceling intake command
+    SequentialCommandGroup cancelIntake = new SequentialCommandGroup(
+      // Stop intake and stop indexer and tell the robot that the note is not stored
+      new ParallelCommandGroup(
+        new IndexerCommand(indexer, true, 0).withTimeout(0.1),
+        new IntakeCommand(intake, true, 0).withTimeout(0.1),
+        new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
+      ),
+      // Stow intake
+      new DeployerCommand(intakeDeployer, Intake.HIGH)
+    );
+
+    // Command sequence for firing the note
+    ParallelCommandGroup fire = new ParallelCommandGroup(
+      new ParallelRaceGroup(
+        // run shooter and wait until shooter is ready and robot is aimed at the target then run indexer
+
+        new PivotCommand(
+          pivot,
+          () ->
+            drivebase
+              .getRelativeInterpolatedPosition(
+                pivotTimer,
+                Shooter.AIMING_TIME,
+                FieldElements.kSpeakerCenterRed,
+                FieldElements.kSpeakerCenterBlue
+              )
+              .getX(),
+          () ->
+            drivebase
+              .getRelativeInterpolatedPosition(
+                pivotTimer,
+                Shooter.AIMING_TIME,
+                FieldElements.kSpeakerCenterRed,
+                FieldElements.kSpeakerCenterBlue
+              )
+              .getX()
+        ),
+        new WaitCommand(1)
+          .andThen(new IndexerCommand(indexer, true, 1))
+          .andThen(new WaitCommand(0.1))
+          .andThen(
+            new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
+          )
+      ),
+      new InstantCommand(driveTimer::start)
+        .andThen(
+          new AbsoluteFieldDrive(
+            drivebase,
+            // Applies deadbands and inverts controls because joysticks
+            // are back-right positive while robot
+            // controls are front-left positive
+            (
+              () ->
+                -drivebase.getAxis(
+                  leftDriverNunchuck.getY(),
+                  leftDriverNunchuck.getRawButton(1),
+                  rightDriverNunchuck.getRawButton(1)
+                )
+            ),
+            (
+              () ->
+                -drivebase.getAxis(
+                  leftDriverNunchuck.getX(),
+                  leftDriverNunchuck.getRawButton(1),
+                  rightDriverNunchuck.getRawButton(1)
+                )
+            ),
+            (
+              () ->
+                drivebase.getTargetAngle(
+                  Math.toDegrees(
+                    Math.atan2(
+                      drivebase
+                        .getRelativeInterpolatedPosition(
+                          driveTimer,
+                          Drivebase.AIMING_TIME,
+                          FieldElements.kSpeakerCenterRed,
+                          FieldElements.kSpeakerCenterBlue
+                        )
+                        .getX(),
+                      drivebase
+                        .getRelativeInterpolatedPosition(
+                          driveTimer,
+                          Drivebase.AIMING_TIME,
+                          FieldElements.kSpeakerCenterRed,
+                          FieldElements.kSpeakerCenterBlue
+                        )
+                        .getZ()
+                    )
+                  )
+                )
+            )
+          )
+        )
+        .andThen(new InstantCommand(driveTimer::reset))
+        .andThen(new InstantCommand(pivotTimer::reset)),
+      // tell the robot that the note is not stored
+      new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
+    );
+
+    // bind command sequences to buttons
+
+    // if the note is not stored, run intake command sequence. if the intake command sequence is running, cancel the intake command sequence
+    new JoystickButton(operatorXbox, 1)
+      .toggleOnTrue(
+        intakeCommandGroup
+          .onlyIf(() -> noteStatus == OperatorConstants.FALSE)
+          .asProxy()
+          .finallyDo(() ->
+            CommandScheduler
+              .getInstance()
+              .schedule(
+                cancelIntake.onlyIf(() -> noteStatus == OperatorConstants.NULL)
+              )
+          )
+      );
+    // if the note is stored, run fire command sequence
+    new JoystickButton(operatorXbox, 3)
+      .whileTrue(fire.onlyIf(() -> noteStatus == OperatorConstants.TRUE));
+    new JoystickButton(rightDriverNunchuck, 2)
+      .onTrue(new InstantCommand(drivebase::zeroGyro));
   }
 
   /**
@@ -109,19 +318,25 @@ public class RobotContainer
    *
    * @return the command to run in autonomous
    */
-  public Command getAutonomousCommand()
-  {
+  public Command getAutonomousCommand() {
     // An example command will be run in autonomous
     return drivebase.getAutonomousCommand("New Auto");
   }
 
-  public void setDriveMode()
-  {
+  public void setShooterCommand() {
+    shooter.setDefaultCommand(
+      new RepeatCommand(
+        new ShooterCommand(shooter, -1, -0.325)
+          .onlyIf(() -> noteStatus == OperatorConstants.TRUE)
+      )
+    );
+  }
+
+  public void setDriveMode() {
     //drivebase.setDefaultCommand();
   }
 
-  public void setMotorBrake(boolean brake)
-  {
+  public void setMotorBrake(boolean brake) {
     drivebase.setMotorBrake(brake);
   }
 }

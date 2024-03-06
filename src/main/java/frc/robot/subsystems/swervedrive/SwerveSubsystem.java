@@ -34,6 +34,7 @@ import java.util.function.DoubleSupplier;
 import swervelib.SwerveController;
 import swervelib.SwerveDrive;
 import swervelib.SwerveDriveTest;
+import swervelib.SwerveModule;
 import swervelib.math.SwerveMath;
 import swervelib.parser.SwerveControllerConfiguration;
 import swervelib.parser.SwerveDriveConfiguration;
@@ -50,7 +51,7 @@ public class SwerveSubsystem extends SubsystemBase {
   /**
    * Maximum speed of the robot in meters per second, used to limit acceleration.
    */
-  public double maximumSpeed = Units.feetToMeters(14.5);
+  public double maximumSpeed = 3;
 
   public static double[] absPos = new double[4];
 
@@ -122,7 +123,7 @@ public class SwerveSubsystem extends SubsystemBase {
         // Translation PID constants
         AutonConstants.ANGLE_PID,
         // Rotation PID constants
-        4.5,
+        3,
         // Max module speed, in m/s
         swerveDrive.swerveDriveConfiguration.getDriveBaseRadiusMeters(),
         // Drive base radius in meters. Distance from robot center to furthest module.
@@ -338,6 +339,13 @@ public class SwerveSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
+    SwerveModule[] rawModules = swerveDrive.getModules();
+    for (int i = 0; i < 4; i++) {
+      absPos[i] =
+        rawModules[i].configuration.absoluteEncoder.getAbsolutePosition() -
+        rawModules[i].configuration.angleOffset;
+      rawModules[i].getAngleMotor().setPosition(absPos[i]);
+    }
     if (LimelightHelpers.getTA("") == 0){
       return;
     }
@@ -582,7 +590,7 @@ public class SwerveSubsystem extends SubsystemBase {
 
   public boolean isReady() {
     return (
-      true //Math.abs(getHeading().getDegrees() - targetAngle) <= 5
+      Math.abs(LimelightHelpers.getTX("")) <= 5
     );
   }
 }

@@ -115,7 +115,11 @@ public class PivotSubsystem extends SubsystemBase {
     if ((timeout && lastDist < Shooter.MAX_DISTANCE)) {
       return false;
     }
-    return true;
+    return Math.abs(targetValue-getTiltDegrees()) <= 1;
+  }
+
+  public void setTargetValue(double target){
+    targetValue=target;
   }
 
   /**

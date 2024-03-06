@@ -68,6 +68,7 @@ public class PivotCommand extends Command {
     // set the pivotPidController setpoint to the target
     pivotPidController.setSetpoint(target);
     // run the tilt motor at the calculated speed
+    pivotSubsystem.setTargetValue(target);
     pivotSubsystem.runTilt(
       -pivotPidController.calculate(pivotSubsystem.getTiltDegrees())
     );

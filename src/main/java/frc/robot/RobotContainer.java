@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -225,67 +226,67 @@ public class RobotContainer {
                 FieldElements.kSpeakerCenterRed,
                 FieldElements.kSpeakerCenterBlue
               )
-              .getX()
+              .getY()
         ),
-        new WaitCommand(1)
+        new WaitUntilCommand(() -> isReady())
           .andThen(new IndexerCommand(indexer, true, 1))
-          .andThen(new WaitCommand(0.1))
+          .andThen(new WaitCommand(0.5))
           .andThen(
             new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
-          )
-      ),
-      new InstantCommand(driveTimer::start)
-        .andThen(
-          new AbsoluteFieldDrive(
-            drivebase,
-            // Applies deadbands and inverts controls because joysticks
-            // are back-right positive while robot
-            // controls are front-left positive
-            (
-              () ->
-                -drivebase.getAxis(
-                  leftDriverNunchuck.getY(),
-                  leftDriverNunchuck.getRawButton(1),
-                  rightDriverNunchuck.getRawButton(1)
-                )
-            ),
-            (
-              () ->
-                -drivebase.getAxis(
-                  leftDriverNunchuck.getX(),
-                  leftDriverNunchuck.getRawButton(1),
-                  rightDriverNunchuck.getRawButton(1)
-                )
-            ),
-            (
-              () ->
-                drivebase.getTargetAngle(
-                  Math.toDegrees(
-                    Math.atan2(
-                      drivebase
-                        .getRelativeInterpolatedPosition(
-                          driveTimer,
-                          Drivebase.AIMING_TIME,
-                          FieldElements.kSpeakerCenterRed,
-                          FieldElements.kSpeakerCenterBlue
-                        )
-                        .getX(),
-                      drivebase
-                        .getRelativeInterpolatedPosition(
-                          driveTimer,
-                          Drivebase.AIMING_TIME,
-                          FieldElements.kSpeakerCenterRed,
-                          FieldElements.kSpeakerCenterBlue
-                        )
-                        .getZ()
+          ),
+        new InstantCommand(driveTimer::start)
+          .andThen(
+            new AbsoluteFieldDrive(
+              drivebase,
+              // Applies deadbands and inverts controls because joysticks
+              // are back-right positive while robot
+              // controls are front-left positive
+              (
+                () ->
+                  -drivebase.getAxis(
+                    leftDriverNunchuck.getY(),
+                    leftDriverNunchuck.getRawButton(1),
+                    rightDriverNunchuck.getRawButton(1)
+                  )
+              ),
+              (
+                () ->
+                  -drivebase.getAxis(
+                    leftDriverNunchuck.getX(),
+                    leftDriverNunchuck.getRawButton(1),
+                    rightDriverNunchuck.getRawButton(1)
+                  )
+              ),
+              (
+                () ->
+                  drivebase.getTargetAngle(
+                    Math.toDegrees(
+                      Math.atan2(
+                        drivebase
+                          .getRelativeInterpolatedPosition(
+                            driveTimer,
+                            Drivebase.AIMING_TIME,
+                            FieldElements.kSpeakerCenterRed,
+                            FieldElements.kSpeakerCenterBlue
+                          )
+                          .getX(),
+                        drivebase
+                          .getRelativeInterpolatedPosition(
+                            driveTimer,
+                            Drivebase.AIMING_TIME,
+                            FieldElements.kSpeakerCenterRed,
+                            FieldElements.kSpeakerCenterBlue
+                          )
+                          .getZ()
+                      )
                     )
                   )
-                )
+              )
             )
           )
-        )
-        .andThen(new InstantCommand(driveTimer::reset))
-        .andThen(new InstantCommand(pivotTimer::reset)),
+          .andThen(new InstantCommand(driveTimer::reset))
+          .andThen(new InstantCommand(pivotTimer::reset))
+      ),
       // tell the robot that the note is not stored
       new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
     );
@@ -330,6 +331,10 @@ public class RobotContainer {
           .onlyIf(() -> noteStatus == OperatorConstants.TRUE)
       )
     );
+  }
+
+  public boolean isReady() {
+    return drivebase.isReady() && pivot.isReady();
   }
 
   public void setDriveMode() {

@@ -139,7 +139,7 @@ public final class Constants {
 
       public static final double CAMERA_ANGLE = 19.03; // degrees
 
-      public static final double GRAVITY_CONSTANT = 10; // arbitrary unit
+      public static final double GRAVITY_CONSTANT = 0.019; // arbitrary unit
 
       public static final double VELOCITY_CONSTANT = 0.005; // arbitrary unit
 

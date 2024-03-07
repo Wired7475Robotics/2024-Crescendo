@@ -22,12 +22,13 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
-import frc.robot.LimelightHelpers;
 import frc.robot.Constants.AutonConstants;
 import frc.robot.Constants.Drivebase;
+import frc.robot.LimelightHelpers;
 import frc.robot.Util.FieldElements;
 import java.io.File;
 import java.util.function.DoubleSupplier;
@@ -136,7 +137,7 @@ public class SwerveSubsystem extends SubsystemBase {
         // THE ORIGIN WILL REMAIN ON THE RED SIDE
         var alliance = DriverStation.getAlliance();
         return alliance.isPresent()
-          ? alliance.get() == DriverStation.Alliance.Blue
+          ? alliance.get() == DriverStation.Alliance.Red
           : true;
       },
       this // Reference to this subsystem to set requirements
@@ -346,10 +347,13 @@ public class SwerveSubsystem extends SubsystemBase {
         rawModules[i].configuration.angleOffset;
       rawModules[i].getAngleMotor().setPosition(absPos[i]);
     }
-    if (LimelightHelpers.getTA("") == 0){
+    if (LimelightHelpers.getTA("") == 0) {
       return;
     }
-    swerveDrive.addVisionMeasurement(LimelightHelpers.getBotPose2d_wpiBlue(""), Timer.getFPGATimestamp());
+    swerveDrive.addVisionMeasurement(
+      LimelightHelpers.getBotPose2d_wpiBlue(""),
+      Timer.getFPGATimestamp()
+    );
   }
 
   @Override
@@ -554,14 +558,8 @@ public class SwerveSubsystem extends SubsystemBase {
     return targetAngle / 180;
   }
 
-  public Pose3d getRelativeInterpolatedPosition(
-    Timer t,
-    double timeToInterpolate,
-    Pose3d redTarget,
-    Pose3d blueTarget
-  ) {
-
-    if (t.get()==timeToInterpolate){
+  public Pose3d getInterpolatedPosition(Timer t, double timeToInterpolate) {
+    if (t.get() == timeToInterpolate) {
       t.stop();
     }
 
@@ -579,18 +577,32 @@ public class SwerveSubsystem extends SubsystemBase {
           ),
         seconds / timeToInterpolate
       );
+    Pose3d interpolatedPose3d = new Pose3d(interpolatedPos);
+    return interpolatedPose3d;
+  }
 
-    return new Pose3d(interpolatedPos)
+  public Pose3d getRelativeInterpolatedPosition(
+    Timer t,
+    double timeToInterpolate,
+    Pose3d redTarget,
+    Pose3d blueTarget
+  ) {
+    Pose3d interpolatedPose3d = getInterpolatedPosition(t, timeToInterpolate)
       .relativeTo(
         DriverStation.getAlliance().equals(Alliance.Blue)
           ? blueTarget
           : redTarget
       );
+
+    SmartDashboard.putNumber("posex", interpolatedPose3d.getX());
+    SmartDashboard.putNumber("posey", interpolatedPose3d.getY());
+    SmartDashboard.putNumber("posez", interpolatedPose3d.getZ());
+    SmartDashboard.putNumber("poseRotationZ", Math.toDegrees(interpolatedPose3d.getRotation().getZ()));
+    SmartDashboard.putNumber("poseRotationY", Math.toDegrees(interpolatedPose3d.getRotation().getY()));
+    return interpolatedPose3d;
   }
 
   public boolean isReady() {
-    return (
-      Math.abs(LimelightHelpers.getTX("")) <= 5
-    );
+    return (Math.abs(LimelightHelpers.getTX("")) <= 5);
   }
 }

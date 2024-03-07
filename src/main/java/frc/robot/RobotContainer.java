@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Drivebase;
+import frc.robot.Constants.DrivebaseConstants;
 import frc.robot.Constants.Intake;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.Shooter;
@@ -142,7 +143,27 @@ public class RobotContainer {
       FieldElements.kSpeakerCenterBlue,
       FieldElements.kSpeakerCenterRed
     );
-    PivotCommand tiltCommand = new PivotCommand(pivot, Shooter.MAX_TILT);
+    PivotCommand tiltCommand = new PivotCommand(
+      pivot,
+      () ->
+        -drivebase
+          .getRelativeInterpolatedPosition(
+            pivotTimer,
+            Shooter.AIMING_TIME,
+            FieldElements.kSpeakerCenterRed,
+            FieldElements.kSpeakerCenterBlue
+          )
+          .getX(),
+      () ->
+        -drivebase
+          .getRelativeInterpolatedPosition(
+            pivotTimer,
+            Shooter.AIMING_TIME,
+            FieldElements.kSpeakerCenterRed,
+            FieldElements.kSpeakerCenterBlue
+          )
+          .getZ()
+    );
     ClimberCommand climbCommand = new ClimberCommand(climber, operatorXbox);
     pivot.setDefaultCommand(tiltCommand);
     climber.setDefaultCommand(climbCommand);
@@ -207,33 +228,13 @@ public class RobotContainer {
       new ParallelRaceGroup(
         // run shooter and wait until shooter is ready and robot is aimed at the target then run indexer
 
-        new PivotCommand(
-          pivot,
-          () ->
-            drivebase
-              .getRelativeInterpolatedPosition(
-                pivotTimer,
-                Shooter.AIMING_TIME,
-                FieldElements.kSpeakerCenterRed,
-                FieldElements.kSpeakerCenterBlue
-              )
-              .getX(),
-          () ->
-            drivebase
-              .getRelativeInterpolatedPosition(
-                pivotTimer,
-                Shooter.AIMING_TIME,
-                FieldElements.kSpeakerCenterRed,
-                FieldElements.kSpeakerCenterBlue
-              )
-              .getY()
-        ),
-        new WaitUntilCommand(() -> isReady())
-          .andThen(new IndexerCommand(indexer, true, 1))
-          .andThen(new WaitCommand(0.5))
-          .andThen(
-            new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
-          ),
+        //,
+        //new WaitUntilCommand(() -> isReady())
+        //  .andThen(new IndexerCommand(indexer, true, 1))
+        //  .andThen(new WaitCommand(0.5))
+        //  .andThen(
+        //    new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
+        //  ),
         new InstantCommand(driveTimer::start)
           .andThen(
             new AbsoluteFieldDrive(
@@ -243,7 +244,7 @@ public class RobotContainer {
               // controls are front-left positive
               (
                 () ->
-                  -drivebase.getAxis(
+                  drivebase.getAxis(
                     leftDriverNunchuck.getY(),
                     leftDriverNunchuck.getRawButton(1),
                     rightDriverNunchuck.getRawButton(1)
@@ -251,7 +252,7 @@ public class RobotContainer {
               ),
               (
                 () ->
-                  -drivebase.getAxis(
+                  drivebase.getAxis(
                     leftDriverNunchuck.getX(),
                     leftDriverNunchuck.getRawButton(1),
                     rightDriverNunchuck.getRawButton(1)
@@ -259,26 +260,24 @@ public class RobotContainer {
               ),
               (
                 () ->
-                  drivebase.getTargetAngle(
-                    Math.toDegrees(
-                      Math.atan2(
-                        drivebase
-                          .getRelativeInterpolatedPosition(
-                            driveTimer,
-                            Drivebase.AIMING_TIME,
-                            FieldElements.kSpeakerCenterRed,
-                            FieldElements.kSpeakerCenterBlue
-                          )
-                          .getX(),
-                        drivebase
-                          .getRelativeInterpolatedPosition(
-                            driveTimer,
-                            Drivebase.AIMING_TIME,
-                            FieldElements.kSpeakerCenterRed,
-                            FieldElements.kSpeakerCenterBlue
-                          )
-                          .getZ()
-                      )
+                  Math.toDegrees(
+                    Math.atan(
+                      -drivebase
+                        .getRelativeInterpolatedPosition(
+                          driveTimer,
+                          Drivebase.AIMING_TIME,
+                          FieldElements.kSpeakerCenterRed,
+                          FieldElements.kSpeakerCenterBlue
+                        )
+                        .getX() /
+                      drivebase
+                        .getRelativeInterpolatedPosition(
+                          driveTimer,
+                          Drivebase.AIMING_TIME,
+                          FieldElements.kSpeakerCenterRed,
+                          FieldElements.kSpeakerCenterBlue
+                        )
+                        .getY()
                     )
                   )
               )
@@ -308,8 +307,7 @@ public class RobotContainer {
           )
       );
     // if the note is stored, run fire command sequence
-    new JoystickButton(operatorXbox, 3)
-      .whileTrue(fire.onlyIf(() -> noteStatus == OperatorConstants.TRUE));
+    new JoystickButton(operatorXbox, 3).whileTrue(fire); //.onlyIf(() -> noteStatus == OperatorConstants.TRUE));
     new JoystickButton(rightDriverNunchuck, 2)
       .onTrue(new InstantCommand(drivebase::zeroGyro));
   }
@@ -321,7 +319,7 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return drivebase.getAutonomousCommand("New Auto");
+    return drivebase.getAutonomousCommand("Debug");
   }
 
   public void setShooterCommand() {

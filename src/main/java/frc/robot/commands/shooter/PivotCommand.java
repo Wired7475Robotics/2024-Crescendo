@@ -63,18 +63,13 @@ public class PivotCommand extends Command {
       // calculate the target angle from the pivotSubsystem
       target =
         Math.toDegrees(
-          Math.atan(
-            m_yDist.getAsDouble() +
-            (m_xDist.getAsDouble() *
-            MathConstants.GRAVITY_CONSTANT) /
-            m_xDist.getAsDouble()
-          )
+          Math.atan((m_yDist.getAsDouble()+ (m_xDist.getAsDouble()*MathConstants.GRAVITY_CONSTANT)) / m_xDist.getAsDouble())
         );
     }
     // set the pivotPidController setpoint to the target
-    pivotPidController.setSetpoint(target);
+    pivotPidController.setSetpoint(pivotSubsystem.getTargetValue(target));
     // run the tilt motor at the calculated speed
-    pivotSubsystem.setTargetValue(target);
+    
     pivotSubsystem.runTilt(
       -pivotPidController.calculate(pivotSubsystem.getTiltDegrees())
     );

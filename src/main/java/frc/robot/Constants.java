@@ -70,7 +70,7 @@ public final class Constants {
     // Constant for autoaim to add to target angle to account for robot velocity
     public static final double VELOCITY_CONSTANT = 0.15; // arbitrary unit
 
-    public static final double AIMING_TIME = 1;
+    public static final double AIMING_TIME = 2;
   }
 
   public static class Intake {
@@ -86,7 +86,7 @@ public final class Constants {
 
     public static final int LOW = 0;
 
-    public static final double SLOW_SPEED = 0.025; // percentage
+    public static final double SLOW_SPEED = 0.25; // percentage
 
     public static final double RAISE_SPEED = -0.5; // percentage
 
@@ -125,29 +125,12 @@ public final class Constants {
     public static class MathConstants {
 
       // Constants for shooter autoaim math
-      public static final double APRIL_TAG_HEIGHT = 57.125; // inches
-
-      public static final double TARGET_HEIGHT = 83; // inches
-
-      public static final double TARGET_DISTANCE = -8; // inches
-
-      public static final double SHOOTER_DISTANCE = 5.3428; // inches
-
-      public static final double SHOOTER_HEIGHT = 6.906585; // inches
-
-      public static final double CAMERA_HEIGHT = 4.429365; // inches
-
-      public static final double CAMERA_ANGLE = 19.03; // degrees
-
-      public static final double GRAVITY_CONSTANT = 0.019; // arbitrary unit
-
-      public static final double VELOCITY_CONSTANT = 0.005; // arbitrary unit
+      public static final double GRAVITY_CONSTANT = 0.15; // arbitrary unit
 
       public static final double CALIBRATION_DISTANCE = 60; // inches
 
       public static final double CALIBRATION_HEIGHT = 16; // inches
 
-      public static final double VOLTAGE_CONSTANT = 0.075;
     }
 
     //shooter stick deadzone for manual control

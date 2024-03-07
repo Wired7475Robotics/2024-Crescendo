@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -24,7 +25,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.Drivebase;
-import frc.robot.Constants.DrivebaseConstants;
 import frc.robot.Constants.Intake;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.Shooter;
@@ -38,7 +38,6 @@ import frc.robot.subsystems.intake.*;
 import frc.robot.subsystems.shooter.*;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import java.io.File;
-import java.lang.reflect.Field;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a "declarative" paradigm, very
@@ -72,6 +71,8 @@ public class RobotContainer {
 
   Timer pivotTimer = new Timer();
   Timer driveTimer = new Timer();
+
+  boolean overideControls = false;
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -146,14 +147,30 @@ public class RobotContainer {
     PivotCommand tiltCommand = new PivotCommand(
       pivot,
       () ->
-        -drivebase
-          .getRelativeInterpolatedPosition(
-            pivotTimer,
-            Shooter.AIMING_TIME,
-            FieldElements.kSpeakerCenterRed,
-            FieldElements.kSpeakerCenterBlue
+        Math.sqrt(
+          Math.pow(
+            -drivebase
+              .getRelativeInterpolatedPosition(
+                pivotTimer,
+                Shooter.AIMING_TIME,
+                FieldElements.kSpeakerCenterRed,
+                FieldElements.kSpeakerCenterBlue
+              )
+              .getX(),
+            2
+          ) +
+          Math.pow(
+            -drivebase
+              .getRelativeInterpolatedPosition(
+                pivotTimer,
+                Shooter.AIMING_TIME,
+                FieldElements.kSpeakerCenterRed,
+                FieldElements.kSpeakerCenterBlue
+              )
+              .getY(),
+            2
           )
-          .getX(),
+        ),
       () ->
         -drivebase
           .getRelativeInterpolatedPosition(
@@ -167,9 +184,6 @@ public class RobotContainer {
     ClimberCommand climbCommand = new ClimberCommand(climber, operatorXbox);
     pivot.setDefaultCommand(tiltCommand);
     climber.setDefaultCommand(climbCommand);
-    intakeDeployer.setDefaultCommand(
-      new InstantCommand(intakeDeployer::runSlow, intakeDeployer)
-    );
   }
 
   /**
@@ -184,9 +198,6 @@ public class RobotContainer {
 
     climber.resetEncoders();
     pivot.resetTiltEncoder();
-
-    new JoystickButton(rightDriverNunchuck, 2)
-      .onTrue((Commands.runOnce(drivebase::zeroGyro)));
 
     // Setup command sequences
 
@@ -207,7 +218,7 @@ public class RobotContainer {
         new IndexerCommand(indexer, false, 0.15)
       ),
       // run indexer backwardsand set the status to true to tell the robot that the note is stored
-      new IndexerCommand(indexer, true, -0.3).withTimeout(0.2),
+      new IndexerCommand(indexer, true, -0.5).withTimeout(0.5),
       new InstantCommand(() -> noteStatus = OperatorConstants.TRUE)
     );
 
@@ -226,15 +237,11 @@ public class RobotContainer {
     // Command sequence for firing the note
     ParallelCommandGroup fire = new ParallelCommandGroup(
       new ParallelRaceGroup(
-        // run shooter and wait until shooter is ready and robot is aimed at the target then run indexer
-
-        //,
-        //new WaitUntilCommand(() -> isReady())
-        //  .andThen(new IndexerCommand(indexer, true, 1))
-        //  .andThen(new WaitCommand(0.5))
-        //  .andThen(
-        //    new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
-        //  ),
+        new WaitCommand(2)
+          .andThen(new IndexerCommand(indexer, true, 1).withTimeout(0.5))
+          .andThen(
+            new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
+          ),
         new InstantCommand(driveTimer::start)
           .andThen(
             new AbsoluteFieldDrive(
@@ -260,56 +267,119 @@ public class RobotContainer {
               ),
               (
                 () ->
-                  Math.toDegrees(
-                    Math.atan(
-                      -drivebase
-                        .getRelativeInterpolatedPosition(
-                          driveTimer,
-                          Drivebase.AIMING_TIME,
-                          FieldElements.kSpeakerCenterRed,
-                          FieldElements.kSpeakerCenterBlue
-                        )
-                        .getX() /
-                      drivebase
-                        .getRelativeInterpolatedPosition(
-                          driveTimer,
-                          Drivebase.AIMING_TIME,
-                          FieldElements.kSpeakerCenterRed,
-                          FieldElements.kSpeakerCenterBlue
-                        )
-                        .getY()
-                    )
-                  )
+                  (
+                    Math.toDegrees(
+                      Math.atan(
+                        -drivebase
+                          .getRelativeInterpolatedPosition(
+                            driveTimer,
+                            Drivebase.AIMING_TIME,
+                            FieldElements.kSpeakerCenterRed,
+                            FieldElements.kSpeakerCenterBlue
+                          )
+                          .getY() /
+                        -drivebase
+                          .getRelativeInterpolatedPosition(
+                            driveTimer,
+                            Drivebase.AIMING_TIME,
+                            FieldElements.kSpeakerCenterRed,
+                            FieldElements.kSpeakerCenterBlue
+                          )
+                          .getX()
+                      )
+                    ) +
+                    180
+                  ) /
+                  180
               )
             )
           )
           .andThen(new InstantCommand(driveTimer::reset))
           .andThen(new InstantCommand(pivotTimer::reset))
-      ),
-      // tell the robot that the note is not stored
-      new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
+      )
     );
+
+    CommandScheduler
+      .getInstance()
+      .schedule(
+        new RepeatCommand(
+          new InstantCommand(() ->
+            SmartDashboard.putNumber(
+              "Drive target",
+              (
+                Math.toDegrees(
+                  Math.atan(
+                    -drivebase
+                      .getRelativeInterpolatedPosition(
+                        driveTimer,
+                        Drivebase.AIMING_TIME,
+                        FieldElements.kSpeakerCenterRed,
+                        FieldElements.kSpeakerCenterBlue
+                      )
+                      .getY() /
+                    -drivebase
+                      .getRelativeInterpolatedPosition(
+                        driveTimer,
+                        Drivebase.AIMING_TIME,
+                        FieldElements.kSpeakerCenterRed,
+                        FieldElements.kSpeakerCenterBlue
+                      )
+                      .getX()
+                  )
+                ) /
+                180
+              )
+            )
+          )
+        )
+          .ignoringDisable(true)
+      );
 
     // bind command sequences to buttons
 
     // if the note is not stored, run intake command sequence. if the intake command sequence is running, cancel the intake command sequence
-    new JoystickButton(operatorXbox, 1)
-      .toggleOnTrue(
+    new JoystickButton(rightDriverNunchuck, 2)
+      .onTrue(
         intakeCommandGroup
           .onlyIf(() -> noteStatus == OperatorConstants.FALSE)
-          .asProxy()
-          .finallyDo(() ->
-            CommandScheduler
-              .getInstance()
-              .schedule(
-                cancelIntake.onlyIf(() -> noteStatus == OperatorConstants.NULL)
-              )
-          )
+          .onlyIf(() -> !overideControls)
       );
+
+    new JoystickButton(operatorXbox, 7)
+      .onTrue(cancelIntake.onlyIf(() -> noteStatus == OperatorConstants.NULL));
+
     // if the note is stored, run fire command sequence
-    new JoystickButton(operatorXbox, 3).whileTrue(fire); //.onlyIf(() -> noteStatus == OperatorConstants.TRUE));
-    new JoystickButton(rightDriverNunchuck, 2)
-      .onTrue(new InstantCommand(drivebase::zeroGyro));
+    new JoystickButton(leftDriverNunchuck, 2)
+      .whileTrue(
+        fire.onlyIf(() ->
+          !overideControls && noteStatus == OperatorConstants.TRUE
+        )
+      );
+    new JoystickButton(operatorXbox, 4)
+      .toggleOnTrue(
+        new InstantCommand(() -> overideControls = true)
+          .until(() -> !overideControls)
+          .finallyDo(() -> new InstantCommand(() -> overideControls = false))
+      );
+    new JoystickButton(operatorXbox, 2)
+      .toggleOnTrue(
+        new ShooterCommand(shooter, 1, 0.35)
+          .onlyIf(() -> overideControls == true)
+      );
+    new JoystickButton(operatorXbox, 1)
+      .whileTrue(
+        new IndexerCommand(indexer, true, -1)
+          .alongWith(
+            new IntakeCommand(intake, true, -1)
+              .onlyIf(() -> overideControls == true)
+          )
+          .onlyIf(() -> overideControls == true)
+      );
+    new JoystickButton(operatorXbox, 8)
+      .whileTrue(
+        new IndexerCommand(indexer, true, 1)
+          .alongWith(new IntakeCommand(intake, true, 1))
+      );
   }
 
   /**
@@ -326,7 +396,7 @@ public class RobotContainer {
     shooter.setDefaultCommand(
       new RepeatCommand(
         new ShooterCommand(shooter, -1, -0.325)
-          .onlyIf(() -> noteStatus == OperatorConstants.TRUE)
+          .onlyIf(() -> noteStatus == OperatorConstants.TRUE).until(()->noteStatus == OperatorConstants.FALSE)
       )
     );
   }

@@ -2,7 +2,6 @@ package frc.robot.subsystems.shooter;
 
 import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.CANSparkMax;
-
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -30,7 +29,7 @@ public class PivotSubsystem extends SubsystemBase {
   // Target value for the tilt angle
   double targetValue;
 
-  double  voltCountIterations;
+  double voltCountIterations;
 
   double totalVoltage;
 
@@ -115,11 +114,11 @@ public class PivotSubsystem extends SubsystemBase {
     if ((timeout && lastDist < Shooter.MAX_DISTANCE)) {
       return false;
     }
-    return Math.abs(targetValue-getTiltDegrees()) <= 1;
+    return Math.abs(targetValue - getTiltDegrees()) <= 1;
   }
 
-  public void setTargetValue(double target){
-    targetValue=target;
+  public void setTargetValue(double target) {
+    targetValue = target;
   }
 
   /**
@@ -128,7 +127,7 @@ public class PivotSubsystem extends SubsystemBase {
    * @return double value of the target angle
    *
    */
-  public double getTargetAngle(double stickaxis ) {
+  public double getTargetAngle(double stickaxis) {
     // If the target value is within the bounds of the max and min tilt, and the stick axis is greater than the deadzone, set the target value to the target value minus the stick axis
     if (
       Shooter.MIN_TILT < targetValue - stickaxis &&
@@ -159,8 +158,13 @@ public class PivotSubsystem extends SubsystemBase {
       "ShooterTilt Error",
       getTiltDegrees() - targetValue
     );
-    voltCountIterations ++;
+    voltCountIterations++;
     totalVoltage += tiltDrive.getBusVoltage();
-    avgVoltage = totalVoltage/voltCountIterations;
+    avgVoltage = totalVoltage / voltCountIterations;
+  }
+
+  public double getTargetValue(double target) {
+    targetValue = target;
+    return Math.max(Shooter.MIN_TILT, Math.min(target, Shooter.MAX_TILT));
   }
 }

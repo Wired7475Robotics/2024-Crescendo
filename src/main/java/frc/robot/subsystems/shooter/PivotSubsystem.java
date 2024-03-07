@@ -3,10 +3,8 @@ package frc.robot.subsystems.shooter;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.CANSparkMax;
 
-import edu.wpi.first.units.Voltage;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -87,97 +85,6 @@ public class PivotSubsystem extends SubsystemBase {
   }
 
   /**
-   * Method to get the tilt angle in radians.
-   *
-   * @param aprilTagAngle The angle of the AprilTag (y axis).
-   * @return The tilt angle in radians.
-   */
-  public double calculateTargetAngle(
-    double aprilTagAngle,
-    double robotVelocity
-  ) {
-    // Calculate the distance to the target
-    double distance =
-      (MathConstants.APRIL_TAG_HEIGHT) /
-      Math.tan(
-        Math.toRadians(aprilTagAngle + Shooter.MathConstants.CAMERA_ANGLE)
-      );
-
-    // Calculate the new target value
-    double newTargetValue = Math.toDegrees(
-      Math.atan2(
-        (
-          MathConstants.TARGET_HEIGHT -
-          MathConstants.SHOOTER_HEIGHT +
-          (-1/Math.pow(distance, MathConstants.GRAVITY_CONSTANT)+1) 
-          
-        ),
-        (
-          MathConstants.TARGET_DISTANCE +
-          MathConstants.SHOOTER_DISTANCE +
-          distance +
-          (robotVelocity * MathConstants.VELOCITY_CONSTANT) + 
-          (avgVoltage*MathConstants.VOLTAGE_CONSTANT)
-        )
-      )
-    );
-    SmartDashboard.putNumber("dist", distance);
-    SmartDashboard.putNumber(
-      "height",
-      (
-        MathConstants.TARGET_HEIGHT +
-        (distance * MathConstants.GRAVITY_CONSTANT)
-      )
-    );
-    SmartDashboard.putNumber(
-      "calcdist",
-      MathConstants.TARGET_DISTANCE +
-      MathConstants.SHOOTER_DISTANCE +
-      distance +
-      (robotVelocity * MathConstants.VELOCITY_CONSTANT)
-    );
-    // If the difference between the new target value and the current target value is greater than 20, or the AprilTag angle is 0 (the limelight likely does not see an apriltag), and the timeout is not active, start filtering april tag angle to avoid sudden changes in the tilt angle
-    if (
-      (
-        Math.abs(targetValue - newTargetValue) >
-        Shooter.APRILTAG_MIN_FILTEROUT_ANGLE ||
-        aprilTagAngle == 0
-      ) &&
-      !timeout
-    ) {
-      // If the filtering is not active, start the timer
-      if (!filtering) {
-        filtering = true;
-        tiltTimeout.start();
-      }
-      // If the timer has been running for more than the set timeout in seconds, stop the filtering and set the timeout to true
-      if (tiltTimeout.get() > Shooter.TIMEOUT) {
-        filtering = false;
-        timeout = true;
-        tiltTimeout.stop();
-        tiltTimeout.reset();
-      }
-      // return the old target value to avoid jittering movement
-      return targetValue;
-    }
-
-    // Set the new target value to the calculated target value, as long as the new target value is within the bounds of the max and min tilt
-    targetValue =
-      Math.min(Shooter.MAX_TILT, Math.max(Shooter.MIN_TILT, newTargetValue));
-    System.out.println(distance + "," + newTargetValue);
-    // If the timeout is active and the april tag angle is 0 (the limelight likely does not see an apriltag), return the max tilt angle
-    if (timeout && aprilTagAngle == 0) {
-      return Shooter.MAX_TILT;
-    }
-    // If the timeout is active and the april tag angle is not 0, set the timeout to false
-    timeout = false;
-    // Set the last distance to the current distance
-    lastDist = distance;
-    // Return the new target value
-    return targetValue;
-  }
-
-  /**
    * Method to calibrate the camera angle.
    *
    * Set an april tag 60 inches away from the camera and 16 inches off the ground, and this method will return the camera angle relative to the floor.
@@ -208,7 +115,11 @@ public class PivotSubsystem extends SubsystemBase {
     if ((timeout && lastDist < Shooter.MAX_DISTANCE)) {
       return false;
     }
-    return true;
+    return Math.abs(targetValue-getTiltDegrees()) <= 1;
+  }
+
+  public void setTargetValue(double target){
+    targetValue=target;
   }
 
   /**
@@ -217,7 +128,7 @@ public class PivotSubsystem extends SubsystemBase {
    * @return double value of the target angle
    *
    */
-  public double getTargetAngle(double stickaxis) {
+  public double getTargetAngle(double stickaxis ) {
     // If the target value is within the bounds of the max and min tilt, and the stick axis is greater than the deadzone, set the target value to the target value minus the stick axis
     if (
       Shooter.MIN_TILT < targetValue - stickaxis &&

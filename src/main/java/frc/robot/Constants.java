@@ -4,11 +4,10 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.util.PIDConstants;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import swervelib.math.Matter;
 import swervelib.parser.PIDFConfig;
 
@@ -22,7 +21,7 @@ import swervelib.parser.PIDFConfig;
  */
 public final class Constants {
 
-  public static final double ROBOT_MASS = (148 - 20.3) * 0.453592; // 32lbs * kg per pound
+  public static final double ROBOT_MASS = (124.4) * 0.453592; // 32lbs * kg per pound
 
   public static final Matter CHASSIS = new Matter(
     new Translation3d(0, 0, Units.inchesToMeters(8)),
@@ -37,7 +36,23 @@ public final class Constants {
 
     public static final PIDFConfig angleAutoPID = new PIDFConfig(0.4, 0, 0.0);
 
-    public static final double MAX_ACCELERATION = 2;
+    public static final double MAX_ACCELERATION = 3;
+  }
+
+  public static final class AutonConstants {
+
+    public static final PIDConstants TRANSLATION_PID = new PIDConstants(
+      0.7,
+      0,
+      0
+    );
+    public static final PIDConstants ANGLE_PID = new PIDConstants(0.4, 0, 0.01);
+  }
+
+  public static final class DrivebaseConstants {
+
+    // Hold time on motor brakes when disabled
+    public static final double WHEEL_LOCK_TIME = 10; // seconds
   }
 
   public static final class Drivebase {
@@ -54,6 +69,8 @@ public final class Constants {
 
     // Constant for autoaim to add to target angle to account for robot velocity
     public static final double VELOCITY_CONSTANT = 0.15; // arbitrary unit
+
+    public static final double AIMING_TIME = 1;
   }
 
   public static class Intake {
@@ -135,6 +152,7 @@ public final class Constants {
 
     //shooter stick deadzone for manual control
     public static final double STICK_DEADZONE = 0.1; // percentage
+    public static final double AIMING_TIME = 0.1;
   }
 
   public static class OperatorConstants {

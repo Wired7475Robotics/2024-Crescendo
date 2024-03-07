@@ -8,37 +8,31 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
-import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Constants.Drivebase;
-import frc.robot.Constants.DrivebaseConstants;
 import frc.robot.Constants.Intake;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.Constants.Shooter;
-import frc.robot.Util.FieldElements;
 import frc.robot.commands.climber.*;
 import frc.robot.commands.intake.*;
 import frc.robot.commands.shooter.*;
+import frc.robot.commands.swervedrive.drivebase.AbsoluteDrive;
 import frc.robot.commands.swervedrive.drivebase.AbsoluteFieldDrive;
 import frc.robot.subsystems.climber.*;
 import frc.robot.subsystems.intake.*;
 import frc.robot.subsystems.shooter.*;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import java.io.File;
-import java.lang.reflect.Field;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a "declarative" paradigm, very
@@ -70,26 +64,24 @@ public class RobotContainer {
 
   int noteStatus = OperatorConstants.FALSE;
 
-  Timer pivotTimer = new Timer();
-  Timer driveTimer = new Timer();
-
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
   public RobotContainer() {
     // Configure the trigger bindings
     configureBindings();
-    drivebase.zeroGyro();
+    // reset encoders for climber and pivot subsystems
+    climber.resetEncoders();
+    pivot.resetTiltEncoder();
 
-    // Applies deadbands and inverts controls because joysticks
-    // are back-right positive while robot
-    // controls are front-left positive
-    // left stick controls translation
-    // right stick controls the desired angle NOT angular rotation
-    Command driveFieldOrientedDirectAngle = drivebase.driveCommand(
+    AbsoluteDrive closedAbsoluteDrive = new AbsoluteDrive(
+      drivebase,
+      // Applies deadbands and inverts controls because joysticks
+      // are back-right positive while robot
+      // controls are front-left positive
       () ->
         MathUtil.applyDeadband(
-          drivebase.getAxis(
+          -drivebase.getAxis(
             leftDriverNunchuck.getY(),
             leftDriverNunchuck.getRawButton(1),
             rightDriverNunchuck.getRawButton(1)
@@ -98,71 +90,41 @@ public class RobotContainer {
         ),
       () ->
         MathUtil.applyDeadband(
-          drivebase.getAxis(
+          -drivebase.getAxis(
             leftDriverNunchuck.getX(),
             leftDriverNunchuck.getRawButton(1),
             rightDriverNunchuck.getRawButton(1)
           ),
           OperatorConstants.LEFT_X_DEADBAND
         ),
-      () -> rightDriverNunchuck.getX(),
+      () -> -rightDriverNunchuck.getX(),
+      () -> -rightDriverNunchuck.getY()
+    );
+    AbsoluteFieldDrive closedFieldAbsoluteDrive = new AbsoluteFieldDrive(
+      drivebase,
+      () ->
+        drivebase.getAxis(
+          leftDriverNunchuck.getY(),
+          leftDriverNunchuck.getRawButton(1),
+          rightDriverNunchuck.getRawButton(1)
+        ),
+      () ->
+        drivebase.getAxis(
+          leftDriverNunchuck.getX(),
+          leftDriverNunchuck.getRawButton(1),
+          rightDriverNunchuck.getRawButton(1)
+        ),
       () -> rightDriverNunchuck.getY()
     );
 
-    Command driveFieldOrientedDirectAngleSim = drivebase.simDriveCommand(
-      () ->
-        MathUtil.applyDeadband(
-          drivebase.getAxis(
-            leftDriverNunchuck.getY(),
-            leftDriverNunchuck.getRawButton(1),
-            rightDriverNunchuck.getRawButton(1)
-          ),
-          OperatorConstants.LEFT_Y_DEADBAND
-        ),
-      () ->
-        MathUtil.applyDeadband(
-          drivebase.getAxis(
-            leftDriverNunchuck.getX(),
-            leftDriverNunchuck.getRawButton(1),
-            rightDriverNunchuck.getRawButton(1)
-          ),
-          OperatorConstants.LEFT_X_DEADBAND
-        ),
-      () -> rightDriverNunchuck.getRawAxis(2)
-    );
-
+    // Set the default commands for the subsystems
     drivebase.setDefaultCommand(
-      !RobotBase.isSimulation()
-        ? driveFieldOrientedDirectAngle
-        : driveFieldOrientedDirectAngleSim
+      !RobotBase.isSimulation() ? closedAbsoluteDrive : closedFieldAbsoluteDrive
     );
 
-    drivebase.getRelativeInterpolatedPosition(
-      pivotTimer,
-      0.1,
-      FieldElements.kSpeakerCenterBlue,
-      FieldElements.kSpeakerCenterRed
-    );
     PivotCommand tiltCommand = new PivotCommand(
       pivot,
-      () ->
-        -drivebase
-          .getRelativeInterpolatedPosition(
-            pivotTimer,
-            Shooter.AIMING_TIME,
-            FieldElements.kSpeakerCenterRed,
-            FieldElements.kSpeakerCenterBlue
-          )
-          .getX(),
-      () ->
-        -drivebase
-          .getRelativeInterpolatedPosition(
-            pivotTimer,
-            Shooter.AIMING_TIME,
-            FieldElements.kSpeakerCenterRed,
-            FieldElements.kSpeakerCenterBlue
-          )
-          .getZ()
+      (() -> drivebase.getRobotVelocity().vxMetersPerSecond)
     );
     ClimberCommand climbCommand = new ClimberCommand(climber, operatorXbox);
     pivot.setDefaultCommand(tiltCommand);
@@ -180,14 +142,6 @@ public class RobotContainer {
    * controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight joysticks}.
    */
   private void configureBindings() {
-    // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
-
-    climber.resetEncoders();
-    pivot.resetTiltEncoder();
-
-    new JoystickButton(rightDriverNunchuck, 2)
-      .onTrue((Commands.runOnce(drivebase::zeroGyro)));
-
     // Setup command sequences
 
     // Command sequence for intaking and storeing note
@@ -227,64 +181,33 @@ public class RobotContainer {
     ParallelCommandGroup fire = new ParallelCommandGroup(
       new ParallelRaceGroup(
         // run shooter and wait until shooter is ready and robot is aimed at the target then run indexer
-
-        //,
-        //new WaitUntilCommand(() -> isReady())
-        //  .andThen(new IndexerCommand(indexer, true, 1))
-        //  .andThen(new WaitCommand(0.5))
-        //  .andThen(
-        //    new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
-        //  ),
-        new InstantCommand(driveTimer::start)
-          .andThen(
-            new AbsoluteFieldDrive(
-              drivebase,
-              // Applies deadbands and inverts controls because joysticks
-              // are back-right positive while robot
-              // controls are front-left positive
-              (
-                () ->
-                  drivebase.getAxis(
-                    leftDriverNunchuck.getY(),
-                    leftDriverNunchuck.getRawButton(1),
-                    rightDriverNunchuck.getRawButton(1)
-                  )
-              ),
-              (
-                () ->
-                  drivebase.getAxis(
-                    leftDriverNunchuck.getX(),
-                    leftDriverNunchuck.getRawButton(1),
-                    rightDriverNunchuck.getRawButton(1)
-                  )
-              ),
-              (
-                () ->
-                  Math.toDegrees(
-                    Math.atan(
-                      -drivebase
-                        .getRelativeInterpolatedPosition(
-                          driveTimer,
-                          Drivebase.AIMING_TIME,
-                          FieldElements.kSpeakerCenterRed,
-                          FieldElements.kSpeakerCenterBlue
-                        )
-                        .getX() /
-                      drivebase
-                        .getRelativeInterpolatedPosition(
-                          driveTimer,
-                          Drivebase.AIMING_TIME,
-                          FieldElements.kSpeakerCenterRed,
-                          FieldElements.kSpeakerCenterBlue
-                        )
-                        .getY()
-                    )
-                  )
-              )
+        new ShooterCommand(shooter, -1.0, -0.325),
+        new WaitCommand(5)
+          .andThen(new IndexerCommand(indexer, true, 1))
+          .andThen(new WaitCommand(0.1))
+      ),
+      new AbsoluteFieldDrive(
+        drivebase,
+        // Applies deadbands and inverts controls because joysticks
+        // are back-right positive while robot
+        // controls are front-left positive
+        (
+          () ->
+            -drivebase.getAxis(
+              leftDriverNunchuck.getY(),
+              leftDriverNunchuck.getRawButton(1),
+              rightDriverNunchuck.getRawButton(1)
             )
-          )
-          .andThen(new InstantCommand(driveTimer::reset))
-          .andThen(new InstantCommand(pivotTimer::reset))
+        ),
+        (
+          () ->
+            -drivebase.getAxis(
+              leftDriverNunchuck.getX(),
+              leftDriverNunchuck.getRawButton(1),
+              rightDriverNunchuck.getRawButton(1)
+            )
+        ),
+        (() -> drivebase.getTargetAngle(LimelightHelpers.getTX("")))
       ),
       // tell the robot that the note is not stored
       new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
@@ -307,9 +230,9 @@ public class RobotContainer {
           )
       );
     // if the note is stored, run fire command sequence
-    new JoystickButton(operatorXbox, 3).whileTrue(fire); //.onlyIf(() -> noteStatus == OperatorConstants.TRUE));
-    new JoystickButton(rightDriverNunchuck, 2)
-      .onTrue(new InstantCommand(drivebase::zeroGyro));
+    new JoystickButton(operatorXbox, 3).whileTrue(fire); //.onlyIf(() -> noteStatus == OperatorConstants.TRUE
+
+    new JoystickButton(rightDriverNunchuck, 2).onTrue(new InstantCommand(drivebase::zeroGyro));
   }
 
   /**
@@ -318,28 +241,30 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    // An example command will be run in autonomous
-    return drivebase.getAutonomousCommand("Debug");
-  }
-
-  public void setShooterCommand() {
-    shooter.setDefaultCommand(
-      new RepeatCommand(
-        new ShooterCommand(shooter, -1, -0.325)
-          .onlyIf(() -> noteStatus == OperatorConstants.TRUE)
-      )
-    );
-  }
-
-  public boolean isReady() {
-    return drivebase.isReady() && pivot.isReady();
+    return drivebase.getAutonomousCommand("Debug", true);
   }
 
   public void setDriveMode() {
-    //drivebase.setDefaultCommand();
+    drivebase.setDefaultCommand(drivebase.getDefaultCommand());
   }
 
   public void setMotorBrake(boolean brake) {
     drivebase.setMotorBrake(brake);
+  }
+
+  public void calibrateCameraAngle() {
+    SmartDashboard.putNumber(
+      "Calibration Angle",
+      pivot.calibrateCameraAngle(LimelightHelpers.getTY(""))
+    );
+  }
+
+  public boolean isReady() {
+    boolean ready =
+      (shooter.isReady() && pivot.isReady() && drivebase.isReady());
+    System.out.println(
+      pivot.isReady() + ", " + drivebase.isReady() + ", " + ready
+    );
+    return ready;
   }
 }

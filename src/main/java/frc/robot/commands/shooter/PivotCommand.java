@@ -1,12 +1,13 @@
 package frc.robot.commands.shooter;
 
+import java.util.function.DoubleSupplier;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
-import frc.robot.Constants.Shooter.MathConstants;
+import frc.robot.LimelightHelpers;
 import frc.robot.subsystems.shooter.PivotSubsystem;
-import java.util.function.DoubleSupplier;
 
 public class PivotCommand extends Command {
 
@@ -15,8 +16,7 @@ public class PivotCommand extends Command {
   XboxController ControllerAxis;
   double target;
   boolean useCamera = true;
-  DoubleSupplier m_xDist;
-  DoubleSupplier m_yDist;
+  DoubleSupplier velocitySupplier;
 
   /**
    * Constructor for the PivotCommand class.
@@ -25,8 +25,7 @@ public class PivotCommand extends Command {
    */
   public PivotCommand(
     PivotSubsystem tiltSubsystem,
-    DoubleSupplier xDist,
-    DoubleSupplier yDist
+    DoubleSupplier velocitySupplier
   ) {
     // set the pivotSubsystem to the tiltSubsystem
     this.pivotSubsystem = tiltSubsystem;
@@ -35,8 +34,8 @@ public class PivotCommand extends Command {
     // set the pivotPidController to the pivotPidControllercontrol from the Constants file
     pivotPidController = Constants.Shooter.pivotPidController;
     // set the useCamera to true
-    m_xDist = xDist;
-    m_yDist = yDist;
+    useCamera = true;
+    this.velocitySupplier = velocitySupplier;
   }
 
   public PivotCommand(PivotSubsystem tiltSubsystem, double targetAngle) {
@@ -60,21 +59,18 @@ public class PivotCommand extends Command {
   public void execute() {
     // if useCamera is true then set the target to the calculated target angle from the Limelight
     if (useCamera) {
+      // get the target angle from the Limelight
+      double aprilTagAngle = LimelightHelpers.getTY("");
       // calculate the target angle from the pivotSubsystem
       target =
-        Math.toDegrees(
-          Math.atan(
-            m_yDist.getAsDouble() +
-            (m_xDist.getAsDouble() *
-            MathConstants.GRAVITY_CONSTANT) /
-            m_xDist.getAsDouble()
-          )
+        pivotSubsystem.calculateTargetAngle(
+          aprilTagAngle,
+          velocitySupplier.getAsDouble()
         );
     }
     // set the pivotPidController setpoint to the target
     pivotPidController.setSetpoint(target);
     // run the tilt motor at the calculated speed
-    pivotSubsystem.setTargetValue(target);
     pivotSubsystem.runTilt(
       -pivotPidController.calculate(pivotSubsystem.getTiltDegrees())
     );

@@ -137,14 +137,8 @@ public class RobotContainer {
         ? driveFieldOrientedDirectAngle
         : driveFieldOrientedDirectAngleSim
     );
-
-    drivebase.getRelativeInterpolatedPosition(
-      pivotTimer,
-      0.1,
-      FieldElements.kSpeakerCenterBlue,
-      FieldElements.kSpeakerCenterRed
-    );
-    PivotCommand tiltCommand = new PivotCommand(
+    ClimberCommand climbCommand = new ClimberCommand(climber, operatorXbox);
+    PivotCommand pivotCommand = new PivotCommand(
       pivot,
       () ->
         Math.sqrt(
@@ -181,8 +175,7 @@ public class RobotContainer {
           )
           .getZ()
     );
-    ClimberCommand climbCommand = new ClimberCommand(climber, operatorXbox);
-    pivot.setDefaultCommand(tiltCommand);
+    pivot.setDefaultCommand(pivotCommand);
     climber.setDefaultCommand(climbCommand);
   }
 
@@ -209,7 +202,7 @@ public class RobotContainer {
         new DeployerCommand(intakeDeployer, Intake.LOW),
         new ParallelRaceGroup(
           new IntakeCommand(intake, false, -0.75),
-          new IndexerCommand(indexer, false, 0.75)
+          new IndexerCommand(indexer, false, 0.5)
         )
       ),
       // Stow intake and stop intake and slow indexer
@@ -218,7 +211,7 @@ public class RobotContainer {
         new IndexerCommand(indexer, false, 0.15)
       ),
       // run indexer backwardsand set the status to true to tell the robot that the note is stored
-      new IndexerCommand(indexer, true, -0.5).withTimeout(0.5),
+      new IndexerCommand(indexer, true, -0.4).withTimeout(0.3),
       new InstantCommand(() -> noteStatus = OperatorConstants.TRUE)
     );
 
@@ -237,7 +230,7 @@ public class RobotContainer {
     // Command sequence for firing the note
     ParallelCommandGroup fire = new ParallelCommandGroup(
       new ParallelRaceGroup(
-        new WaitCommand(2)
+        new WaitCommand(1.5)
           .andThen(new IndexerCommand(indexer, true, 1).withTimeout(0.5))
           .andThen(
             new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
@@ -350,7 +343,7 @@ public class RobotContainer {
 
     // if the note is stored, run fire command sequence
     new JoystickButton(leftDriverNunchuck, 2)
-      .whileTrue(
+      .onTrue(
         fire.onlyIf(() ->
           !overideControls && noteStatus == OperatorConstants.TRUE
         )
@@ -395,9 +388,11 @@ public class RobotContainer {
   public void setShooterCommand() {
     shooter.setDefaultCommand(
       new RepeatCommand(
-        new ShooterCommand(shooter, -1, -0.325)
-          .onlyIf(() -> noteStatus == OperatorConstants.TRUE).until(()->noteStatus == OperatorConstants.FALSE)
-      )
+          new ShooterCommand(shooter, -1, -0.325)
+            .onlyIf(() -> noteStatus == OperatorConstants.TRUE)
+            .until(() -> noteStatus == OperatorConstants.FALSE)
+          
+        )
     );
   }
 

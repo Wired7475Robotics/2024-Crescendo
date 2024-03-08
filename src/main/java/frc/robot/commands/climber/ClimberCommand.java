@@ -45,6 +45,6 @@ public class ClimberCommand extends Command {
   @Override
   public void end(boolean interrupted) {
     // Stop the Climber motors
-    climber.runClimbers(0, false);
+    climber.runClimbers(0, true);
   }
 }

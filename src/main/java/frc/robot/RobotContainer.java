@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.fasterxml.jackson.core.sym.Name;
+import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Joystick;
@@ -62,10 +64,12 @@ public class RobotContainer {
 
   private static final DeployerSubsystem intakeDeployer = new DeployerSubsystem();
 
-  Joystick leftDriverNunchuck = new Joystick(0);
-  Joystick rightDriverNunchuck = new Joystick(1);
+  public static final Joystick leftDriverNunchuck = new Joystick(0);
+  public static final Joystick rightDriverNunchuck = new Joystick(1);
 
   XboxController operatorXbox = new XboxController(2);
+
+  boolean autoFire = false;
 
   int noteStatus = OperatorConstants.FALSE;
 
@@ -138,43 +142,7 @@ public class RobotContainer {
         : driveFieldOrientedDirectAngleSim
     );
     ClimberCommand climbCommand = new ClimberCommand(climber, operatorXbox);
-    PivotCommand pivotCommand = new PivotCommand(
-      pivot,
-      () ->
-        Math.sqrt(
-          Math.pow(
-            -drivebase
-              .getRelativeInterpolatedPosition(
-                pivotTimer,
-                Shooter.AIMING_TIME,
-                FieldElements.kSpeakerCenterRed,
-                FieldElements.kSpeakerCenterBlue
-              )
-              .getX(),
-            2
-          ) +
-          Math.pow(
-            -drivebase
-              .getRelativeInterpolatedPosition(
-                pivotTimer,
-                Shooter.AIMING_TIME,
-                FieldElements.kSpeakerCenterRed,
-                FieldElements.kSpeakerCenterBlue
-              )
-              .getY(),
-            2
-          )
-        ),
-      () ->
-        -drivebase
-          .getRelativeInterpolatedPosition(
-            pivotTimer,
-            Shooter.AIMING_TIME,
-            FieldElements.kSpeakerCenterRed,
-            FieldElements.kSpeakerCenterBlue
-          )
-          .getZ()
-    );
+    PivotCommand pivotCommand = new PivotCommand(pivot, 25);
     pivot.setDefaultCommand(pivotCommand);
     climber.setDefaultCommand(climbCommand);
   }
@@ -213,18 +181,6 @@ public class RobotContainer {
       // run indexer backwardsand set the status to true to tell the robot that the note is stored
       new IndexerCommand(indexer, true, -0.4).withTimeout(0.3),
       new InstantCommand(() -> noteStatus = OperatorConstants.TRUE)
-    );
-
-    // Command sequence for canceling intake command
-    SequentialCommandGroup cancelIntake = new SequentialCommandGroup(
-      // Stop intake and stop indexer and tell the robot that the note is not stored
-      new ParallelCommandGroup(
-        new IndexerCommand(indexer, true, 0).withTimeout(0.1),
-        new IntakeCommand(intake, true, 0).withTimeout(0.1),
-        new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
-      ),
-      // Stow intake
-      new DeployerCommand(intakeDeployer, Intake.HIGH)
     );
 
     // Command sequence for firing the note
@@ -328,12 +284,69 @@ public class RobotContainer {
           .ignoringDisable(true)
       );
 
+    SequentialCommandGroup cycle = new SequentialCommandGroup(
+      intakeCommandGroup,
+      new ParallelRaceGroup(
+        new PivotCommand(
+          pivot,
+          () ->
+            Math.sqrt(
+              Math.pow(
+                -drivebase
+                  .getRelativeInterpolatedPosition(
+                    pivotTimer,
+                    Shooter.AIMING_TIME,
+                    FieldElements.kSpeakerCenterRed,
+                    FieldElements.kSpeakerCenterBlue
+                  )
+                  .getX(),
+                2
+              ) +
+              Math.pow(
+                -drivebase
+                  .getRelativeInterpolatedPosition(
+                    pivotTimer,
+                    Shooter.AIMING_TIME,
+                    FieldElements.kSpeakerCenterRed,
+                    FieldElements.kSpeakerCenterBlue
+                  )
+                  .getY(),
+                2
+              )
+            ),
+          () ->
+            -drivebase
+              .getRelativeInterpolatedPosition(
+                pivotTimer,
+                Shooter.AIMING_TIME,
+                FieldElements.kSpeakerCenterRed,
+                FieldElements.kSpeakerCenterBlue
+              )
+              .getZ()
+        ),
+        new WaitUntilCommand(() -> leftDriverNunchuck.getRawButton(2))
+          .andThen(fire)
+      )
+    );
+
+    SequentialCommandGroup cancelIntake = new SequentialCommandGroup(
+      // Stop intake and stop indexer and tell the robot that the note is not stored
+      new InstantCommand(() -> CommandScheduler.getInstance().cancel(cycle)),
+      new ParallelCommandGroup(
+        new IndexerCommand(indexer, true, 0).withTimeout(0.1),
+        new IntakeCommand(intake, true, 0).withTimeout(0.1),
+        new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
+      ),
+      // Stow intake
+      new DeployerCommand(intakeDeployer, Intake.HIGH)
+    );
+
     // bind command sequences to buttons
 
     // if the note is not stored, run intake command sequence. if the intake command sequence is running, cancel the intake command sequence
     new JoystickButton(rightDriverNunchuck, 2)
       .onTrue(
-        intakeCommandGroup
+        cycle
           .onlyIf(() -> noteStatus == OperatorConstants.FALSE)
           .onlyIf(() -> !overideControls)
       );
@@ -342,17 +355,9 @@ public class RobotContainer {
       .onTrue(cancelIntake.onlyIf(() -> noteStatus == OperatorConstants.NULL));
 
     // if the note is stored, run fire command sequence
-    new JoystickButton(leftDriverNunchuck, 2)
-      .onTrue(
-        fire.onlyIf(() ->
-          !overideControls && noteStatus == OperatorConstants.TRUE
-        )
-      );
     new JoystickButton(operatorXbox, 4)
       .toggleOnTrue(
-        new InstantCommand(() -> overideControls = true)
-          .until(() -> !overideControls)
-          .finallyDo(() -> new InstantCommand(() -> overideControls = false))
+        new InstantCommand(() -> overideControls = !overideControls)
       );
     new JoystickButton(operatorXbox, 2)
       .toggleOnTrue(
@@ -382,17 +387,189 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
+    NamedCommands.registerCommand(
+      "Deploy",
+      new DeployerCommand(intakeDeployer, Intake.LOW)
+    );
+    SequentialCommandGroup intakeCommandGroup = new SequentialCommandGroup(
+      new InstantCommand(() -> noteStatus = OperatorConstants.NULL),
+      // Deploy intake and start intake and indexer
+      new ParallelCommandGroup(
+        new ParallelRaceGroup(
+          new IntakeCommand(intake, false, -0.75),
+          new IndexerCommand(indexer, false, 0.5)
+        )
+      ),
+      // Stow intake and stop intake and slow indexer
+      new ParallelCommandGroup(new IndexerCommand(indexer, false, 0.15)),
+      // run indexer backwardsand set the status to true to tell the robot that the note is stored
+      new IndexerCommand(indexer, true, -0.4).withTimeout(0.3),
+      new InstantCommand(() -> noteStatus = OperatorConstants.TRUE)
+    );
+
+    // Command sequence for firing the note
+    ParallelCommandGroup fire = new ParallelCommandGroup(
+      new ParallelRaceGroup(
+        new IndexerCommand(indexer, true, 1)
+          .withTimeout(0.5)
+          .andThen(
+            new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
+          )
+          .andThen(new InstantCommand(pivotTimer::reset))
+      )
+    );
+
+    CommandScheduler
+      .getInstance()
+      .schedule(
+        new RepeatCommand(
+          new InstantCommand(() ->
+            SmartDashboard.putNumber(
+              "Drive target",
+              (
+                Math.toDegrees(
+                  Math.atan(
+                    -drivebase
+                      .getRelativeInterpolatedPosition(
+                        driveTimer,
+                        Drivebase.AIMING_TIME,
+                        FieldElements.kSpeakerCenterRed,
+                        FieldElements.kSpeakerCenterBlue
+                      )
+                      .getY() /
+                    -drivebase
+                      .getRelativeInterpolatedPosition(
+                        driveTimer,
+                        Drivebase.AIMING_TIME,
+                        FieldElements.kSpeakerCenterRed,
+                        FieldElements.kSpeakerCenterBlue
+                      )
+                      .getX()
+                  )
+                ) /
+                180
+              )
+            )
+          )
+        )
+          .ignoringDisable(true)
+      );
+
+    SequentialCommandGroup cycle = new SequentialCommandGroup(
+      intakeCommandGroup,
+      new ParallelRaceGroup(
+        new PivotCommand(
+          pivot,
+          () ->
+            Math.sqrt(
+              Math.pow(
+                -drivebase
+                  .getRelativeInterpolatedPosition(
+                    pivotTimer,
+                    Shooter.AIMING_TIME,
+                    FieldElements.kSpeakerCenterRed,
+                    FieldElements.kSpeakerCenterBlue
+                  )
+                  .getX(),
+                2
+              ) +
+              Math.pow(
+                -drivebase
+                  .getRelativeInterpolatedPosition(
+                    pivotTimer,
+                    Shooter.AIMING_TIME,
+                    FieldElements.kSpeakerCenterRed,
+                    FieldElements.kSpeakerCenterBlue
+                  )
+                  .getY(),
+                2
+              )
+            ),
+          () ->
+            -drivebase
+              .getRelativeInterpolatedPosition(
+                pivotTimer,
+                Shooter.AIMING_TIME,
+                FieldElements.kSpeakerCenterRed,
+                FieldElements.kSpeakerCenterBlue
+              )
+              .getZ()
+        ),
+        new WaitUntilCommand(() -> autoFire)
+          .andThen(fire)
+          .andThen(new InstantCommand(() -> autoFire = false))
+      )
+    );
+
+    NamedCommands.registerCommand("StartCycle", cycle);
+    NamedCommands.registerCommand(
+      "EndCycle",
+      new InstantCommand(() -> autoFire = true)
+    );
+    NamedCommands.registerCommand("Fire", fire);
+    NamedCommands.registerCommand(
+      "Stow",
+      new DeployerCommand(intakeDeployer, Intake.HIGH)
+    );
+    NamedCommands.registerCommand(
+      "RunShooter",
+      new ShooterCommand(shooter, 1, -0.35)
+    );
+    NamedCommands.registerCommand(
+      "StopShooter",
+      new ShooterCommand(shooter, 0, 0)
+    );
+    NamedCommands.registerCommand(
+      "Aim",
+      new PivotCommand(
+        pivot,
+        () ->
+          Math.sqrt(
+            Math.pow(
+              -drivebase
+                .getRelativeInterpolatedPosition(
+                  pivotTimer,
+                  Shooter.AIMING_TIME,
+                  FieldElements.kSpeakerCenterRed,
+                  FieldElements.kSpeakerCenterBlue
+                )
+                .getX(),
+              2
+            ) +
+            Math.pow(
+              -drivebase
+                .getRelativeInterpolatedPosition(
+                  pivotTimer,
+                  Shooter.AIMING_TIME,
+                  FieldElements.kSpeakerCenterRed,
+                  FieldElements.kSpeakerCenterBlue
+                )
+                .getY(),
+              2
+            )
+          ),
+        () ->
+          -drivebase
+            .getRelativeInterpolatedPosition(
+              pivotTimer,
+              Shooter.AIMING_TIME,
+              FieldElements.kSpeakerCenterRed,
+              FieldElements.kSpeakerCenterBlue
+            )
+            .getZ()
+      )
+    );
+
     return drivebase.getAutonomousCommand("Debug");
   }
 
   public void setShooterCommand() {
     shooter.setDefaultCommand(
       new RepeatCommand(
-          new ShooterCommand(shooter, -1, -0.325)
-            .onlyIf(() -> noteStatus == OperatorConstants.TRUE)
-            .until(() -> noteStatus == OperatorConstants.FALSE)
-          
-        )
+        new ShooterCommand(shooter, -1, -0.325)
+          .onlyIf(() -> noteStatus == OperatorConstants.TRUE)
+          .until(() -> noteStatus == OperatorConstants.FALSE)
+      )
     );
   }
 

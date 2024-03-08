@@ -34,9 +34,13 @@ public class ClimberCommand extends Command {
   @Override
   public void execute() {
     // Run the Climber motors at the speed of the left and right triggers on the XboxController
-    double speed =
-      controller.getLeftTriggerAxis() - controller.getRightTriggerAxis();
-    climber.runClimbers(speed, true);
+    double leftSpeed =
+      controller.getLeftTriggerAxis() -
+      (controller.getLeftBumper() ? 1 : 0);
+    double rightSpeed =
+      controller.getRightTriggerAxis() -
+      (controller.getRightBumper() ? 1 : 0);
+    climber.runClimbers(rightSpeed, leftSpeed, true);
   }
 
   /**
@@ -45,6 +49,6 @@ public class ClimberCommand extends Command {
   @Override
   public void end(boolean interrupted) {
     // Stop the Climber motors
-    climber.runClimbers(0, true);
+    climber.runClimbers(0, 0, true);
   }
 }

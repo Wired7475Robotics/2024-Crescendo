@@ -39,10 +39,10 @@ public class ClimberSubsystem extends SubsystemBase {
    * @param speed The speed to run the climbers at.
    * @param isBreakMode Whether or not to run the climbers in brake mode.
    */
-  public void runClimbers(double speed, boolean isBreakMode) {
+  public void runClimbers(double rightSpeed, double leftSpeed, boolean isBreakMode) {
     // Run the left and right climber motors at the given speed
-    leftClimber.set(-speed);
-    rightClimber.set(speed);
+    leftClimber.set(-leftSpeed);
+    rightClimber.set(rightSpeed);
     // Set the idle mode for the left and right climber motors to brake mode if isBreakMode is true, else set the idle mode to coast mode
     if (isBreakMode) {
       leftClimber.setIdleMode(IdleMode.kBrake);

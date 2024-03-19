@@ -29,6 +29,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants.AutonConstants;
 import frc.robot.Constants.Drivebase;
 import frc.robot.LimelightHelpers;
+import frc.robot.RobotContainer;
 import frc.robot.Util.FieldElements;
 import java.io.File;
 import java.util.function.DoubleSupplier;
@@ -592,11 +593,32 @@ public class SwerveSubsystem extends SubsystemBase {
   ) {
     Pose3d interpolatedPose3d = getInterpolatedPosition(t, timeToInterpolate)
       .relativeTo(
-        DriverStation.getAlliance().equals(Alliance.Red)
+        RobotContainer.alianceChooser.getSelected().equals(RobotContainer.RedAliance)
           ? redTarget
           : blueTarget
       );
 
+    SmartDashboard.putNumber("posex", interpolatedPose3d.getX());
+    SmartDashboard.putNumber("posey", interpolatedPose3d.getY());
+    SmartDashboard.putNumber("posez", interpolatedPose3d.getZ());
+    SmartDashboard.putNumber("poseRotationZ", Math.toDegrees(interpolatedPose3d.getRotation().getZ()));
+    SmartDashboard.putNumber("poseRotationY", Math.toDegrees(interpolatedPose3d.getRotation().getY()));
+    return interpolatedPose3d;
+  }
+
+  public Pose3d getRelativeInterpolatedPosition(
+    Timer t,
+    double timeToInterpolate,
+    Pose3d redTarget,
+    Pose3d blueTarget,
+    boolean isRed
+  ) {
+    Pose3d interpolatedPose3d = getInterpolatedPosition(t, timeToInterpolate)
+      .relativeTo(  
+        isRed
+          ? redTarget
+          : blueTarget
+      );
     SmartDashboard.putNumber("posex", interpolatedPose3d.getX());
     SmartDashboard.putNumber("posey", interpolatedPose3d.getY());
     SmartDashboard.putNumber("posez", interpolatedPose3d.getZ());

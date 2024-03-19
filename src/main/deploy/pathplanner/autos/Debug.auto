@@ -16,24 +16,6 @@
           "data": {
             "commands": [
               {
-                "type": "named",
-                "data": {
-                  "name": "RunShooter"
-                }
-              },
-              {
-                "type": "wait",
-                "data": {
-                  "waitTime": 1.0
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "Fire"
-                }
-              },
-              {
                 "type": "path",
                 "data": {
                   "pathName": "New New Path"

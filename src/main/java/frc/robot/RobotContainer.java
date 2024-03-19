@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -66,12 +67,14 @@ public class RobotContainer {
 
   public static final Joystick leftDriverNunchuck = new Joystick(0);
   public static final Joystick rightDriverNunchuck = new Joystick(1);
-
+  public static final String RedAliance = "red";
+  public static final String BlueAliance = "blue";
+  public static SendableChooser alianceChooser = new SendableChooser();
   XboxController operatorXbox = new XboxController(2);
 
   boolean autoFire = false;
 
-  int noteStatus = OperatorConstants.FALSE;
+  int noteStatus = OperatorConstants.TRUE;
 
   Timer pivotTimer = new Timer();
   Timer driveTimer = new Timer();
@@ -82,6 +85,9 @@ public class RobotContainer {
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
   public RobotContainer() {
+    alianceChooser.setDefaultOption("Blue", BlueAliance);
+    alianceChooser.addOption("Red", RedAliance);
+    SmartDashboard.putData(alianceChooser);
     // Configure the trigger bindings
     configureBindings();
     SmartDashboard.putData("Swerve Subsystem", drivebase);
@@ -99,7 +105,8 @@ public class RobotContainer {
             leftDriverNunchuck.getY(),
             leftDriverNunchuck.getRawButton(1),
             rightDriverNunchuck.getRawButton(1)
-          ),
+          ) *
+          (alianceChooser.getSelected().equals(RedAliance) ? -1 : 1),
           OperatorConstants.LEFT_Y_DEADBAND
         ),
       () ->
@@ -108,11 +115,16 @@ public class RobotContainer {
             leftDriverNunchuck.getX(),
             leftDriverNunchuck.getRawButton(1),
             rightDriverNunchuck.getRawButton(1)
-          ),
+          ) *
+          (alianceChooser.getSelected().equals(RedAliance) ? -1 : 1),
           OperatorConstants.LEFT_X_DEADBAND
         ),
-      () -> -rightDriverNunchuck.getX(),
-      () -> -rightDriverNunchuck.getY()
+      () ->
+        -rightDriverNunchuck.getX() *
+        (alianceChooser.getSelected().equals(RedAliance) ? -1 : 1),
+      () ->
+        -rightDriverNunchuck.getY() *
+        (alianceChooser.getSelected().equals(RedAliance) ? -1 : 1)
     );
 
     Command driveFieldOrientedDirectAngleSim = drivebase.simDriveCommand(
@@ -171,16 +183,16 @@ public class RobotContainer {
         new DeployerCommand(intakeDeployer, Intake.LOW),
         new ParallelRaceGroup(
           new IntakeCommand(intake, false, -0.75),
-          new IndexerCommand(indexer, false, 0.5)
+          new IndexerCommand(indexer, false, 0.4)
         )
       ),
       // Stow intake and stop intake and slow indexer
       new ParallelCommandGroup(
         new DeployerCommand(intakeDeployer, Intake.HIGH),
-        new IndexerCommand(indexer, false, 0.15)
+        new IndexerCommand(indexer, false, 0.3)
       ),
       // run indexer backwardsand set the status to true to tell the robot that the note is stored
-      new IndexerCommand(indexer, true, -0.4).withTimeout(0.3),
+      new IndexerCommand(indexer, true, -0.4).withTimeout(0.15),
       new InstantCommand(() -> noteStatus = OperatorConstants.TRUE)
     );
 
@@ -205,7 +217,8 @@ public class RobotContainer {
                     leftDriverNunchuck.getY(),
                     leftDriverNunchuck.getRawButton(1),
                     rightDriverNunchuck.getRawButton(1)
-                  )
+                  ) *
+                  (alianceChooser.getSelected().equals(RedAliance) ? -1 : 1)
               ),
               (
                 () ->
@@ -213,7 +226,8 @@ public class RobotContainer {
                     leftDriverNunchuck.getX(),
                     leftDriverNunchuck.getRawButton(1),
                     rightDriverNunchuck.getRawButton(1)
-                  )
+                  ) *
+                  (alianceChooser.getSelected().equals(RedAliance) ? -1 : 1)
               ),
               (
                 () ->
@@ -225,7 +239,8 @@ public class RobotContainer {
                             driveTimer,
                             Drivebase.AIMING_TIME,
                             FieldElements.kSpeakerCenterRed,
-                            FieldElements.kSpeakerCenterBlue
+                            FieldElements.kSpeakerCenterBlue,
+                            alianceChooser.getSelected().equals(RedAliance)
                           )
                           .getY() /
                         -drivebase
@@ -233,11 +248,12 @@ public class RobotContainer {
                             driveTimer,
                             Drivebase.AIMING_TIME,
                             FieldElements.kSpeakerCenterRed,
-                            FieldElements.kSpeakerCenterBlue
+                            FieldElements.kSpeakerCenterBlue,
+                            alianceChooser.getSelected().equals(RedAliance)
                           )
                           .getX()
                       )
-                    )
+                    ) + (alianceChooser.getSelected().equals(RedAliance)? 180 : 0) 
                   ) /
                   180
               )
@@ -245,7 +261,7 @@ public class RobotContainer {
           )
           .andThen(new InstantCommand(driveTimer::reset))
           .andThen(new InstantCommand(pivotTimer::reset)),
-          new PivotCommand(
+        new PivotCommand(
           pivot,
           () ->
             Math.sqrt(
@@ -255,7 +271,8 @@ public class RobotContainer {
                     pivotTimer,
                     Shooter.AIMING_TIME,
                     FieldElements.kSpeakerCenterRed,
-                    FieldElements.kSpeakerCenterBlue
+                    FieldElements.kSpeakerCenterBlue,
+                    alianceChooser.getSelected().equals(RedAliance)
                   )
                   .getX(),
                 2
@@ -266,7 +283,8 @@ public class RobotContainer {
                     pivotTimer,
                     Shooter.AIMING_TIME,
                     FieldElements.kSpeakerCenterRed,
-                    FieldElements.kSpeakerCenterBlue
+                    FieldElements.kSpeakerCenterBlue,
+                    alianceChooser.getSelected().equals(RedAliance)
                   )
                   .getY(),
                 2
@@ -278,7 +296,8 @@ public class RobotContainer {
                 pivotTimer,
                 Shooter.AIMING_TIME,
                 FieldElements.kSpeakerCenterRed,
-                FieldElements.kSpeakerCenterBlue
+                FieldElements.kSpeakerCenterBlue,
+                alianceChooser.getSelected().equals(RedAliance)
               )
               .getZ()
         )
@@ -397,14 +416,14 @@ public class RobotContainer {
       );
     new JoystickButton(operatorXbox, 2)
       .toggleOnTrue(
-        new ShooterCommand(shooter, 1, 0.35)
+        new ShooterCommand(shooter, -1, 0.35)
           .onlyIf(() -> overideControls == true)
       );
     new JoystickButton(operatorXbox, 1)
       .whileTrue(
         new IndexerCommand(indexer, true, -1)
           .alongWith(
-            new IntakeCommand(intake, true, -1)
+            new IntakeCommand(intake, true, 1)
               .onlyIf(() -> overideControls == true)
           )
           .onlyIf(() -> overideControls == true)
@@ -412,7 +431,7 @@ public class RobotContainer {
     new JoystickButton(operatorXbox, 8)
       .whileTrue(
         new IndexerCommand(indexer, true, 1)
-          .alongWith(new IntakeCommand(intake, true, 1))
+          .alongWith(new IntakeCommand(intake, true, -1))
       );
   }
 
@@ -423,225 +442,227 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    NamedCommands.registerCommand(
-      "Deploy",
-      new DeployerCommand(intakeDeployer, Intake.LOW)
-    );
-    SequentialCommandGroup intakeCommandGroup = new SequentialCommandGroup(
-      new InstantCommand(() -> noteStatus = OperatorConstants.NULL),
-      // Deploy intake and start intake and indexer
-      new ParallelCommandGroup(
-        new ParallelRaceGroup(
-          new IntakeCommand(intake, false, -0.75),
-          new IndexerCommand(indexer, false, 0.25)
-        )
-      ),
-      // Stow intake and stop intake and slow indexer
-      new ParallelCommandGroup(new IndexerCommand(indexer, false, 0.1)),
-      // run indexer backwardsand set the status to true to tell the robot that the note is stored
-      new IndexerCommand(indexer, true, -0.4).withTimeout(0.3),
-      new InstantCommand(() -> noteStatus = OperatorConstants.TRUE)
-    );
-
-    // Command sequence for firing the note
-    ParallelCommandGroup fire = new ParallelCommandGroup(
-      new ParallelRaceGroup(
-        new IndexerCommand(indexer, true, 1)
-          .withTimeout(0.5)
-          .andThen(
-            new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
-          )
-          .andThen(new InstantCommand(pivotTimer::reset)),
-          new PivotCommand(
-          pivot,
-          () ->
-            Math.sqrt(
-              Math.pow(
-                -drivebase
-                  .getRelativeInterpolatedPosition(
-                    pivotTimer,
-                    Shooter.AIMING_TIME,
-                    FieldElements.kSpeakerCenterRed,
-                    FieldElements.kSpeakerCenterBlue
-                  )
-                  .getX(),
-                2
-              ) +
-              Math.pow(
-                -drivebase
-                  .getRelativeInterpolatedPosition(
-                    pivotTimer,
-                    Shooter.AIMING_TIME,
-                    FieldElements.kSpeakerCenterRed,
-                    FieldElements.kSpeakerCenterBlue
-                  )
-                  .getY(),
-                2
-              )
-            ),
-          () ->
-            -drivebase
-              .getRelativeInterpolatedPosition(
-                pivotTimer,
-                Shooter.AIMING_TIME,
-                FieldElements.kSpeakerCenterRed,
-                FieldElements.kSpeakerCenterBlue
-              )
-              .getZ()
-        )
-      )
-    );
-
-    CommandScheduler
-      .getInstance()
-      .schedule(
-        new RepeatCommand(
-          new InstantCommand(() ->
-            SmartDashboard.putNumber(
-              "Drive target",
-              (
-                Math.toDegrees(
-                  Math.atan(
-                    -drivebase
-                      .getRelativeInterpolatedPosition(
-                        driveTimer,
-                        Drivebase.AIMING_TIME,
-                        FieldElements.kSpeakerCenterRed,
-                        FieldElements.kSpeakerCenterBlue
-                      )
-                      .getY() /
-                    -drivebase
-                      .getRelativeInterpolatedPosition(
-                        driveTimer,
-                        Drivebase.AIMING_TIME,
-                        FieldElements.kSpeakerCenterRed,
-                        FieldElements.kSpeakerCenterBlue
-                      )
-                      .getX()
-                  )
-                ) /
-                180
-              )
-            )
-          )
-        )
-          .ignoringDisable(true)
-      );
-
-    SequentialCommandGroup cycle = new SequentialCommandGroup(
-      intakeCommandGroup,
-      new ParallelRaceGroup(
-        new PivotCommand(
-          pivot,
-          () ->
-            Math.sqrt(
-              Math.pow(
-                -drivebase
-                  .getRelativeInterpolatedPosition(
-                    pivotTimer,
-                    Shooter.AIMING_TIME,
-                    FieldElements.kSpeakerCenterRed,
-                    FieldElements.kSpeakerCenterBlue
-                  )
-                  .getX(),
-                2
-              ) +
-              Math.pow(
-                -drivebase
-                  .getRelativeInterpolatedPosition(
-                    pivotTimer,
-                    Shooter.AIMING_TIME,
-                    FieldElements.kSpeakerCenterRed,
-                    FieldElements.kSpeakerCenterBlue
-                  )
-                  .getY(),
-                2
-              )
-            ),
-          () ->
-            -drivebase
-              .getRelativeInterpolatedPosition(
-                pivotTimer,
-                Shooter.AIMING_TIME,
-                FieldElements.kSpeakerCenterRed,
-                FieldElements.kSpeakerCenterBlue
-              )
-              .getZ()
-        ),
-        new WaitUntilCommand(() -> autoFire)
-          .andThen(fire)
-          .andThen(new InstantCommand(() -> autoFire = false))
-      )
-    );
-
-    NamedCommands.registerCommand("StartCycle", cycle);
-    NamedCommands.registerCommand(
-      "EndCycle",
-      new InstantCommand(() -> autoFire = true)
-    );
-    NamedCommands.registerCommand("Fire", fire);
-    NamedCommands.registerCommand(
-      "Stow",
-      new DeployerCommand(intakeDeployer, Intake.HIGH)
-    );
-    NamedCommands.registerCommand(
-      "RunShooter",
-      new ShooterCommand(shooter, 1, -0.35)
-    );
-    NamedCommands.registerCommand(
-      "StopShooter",
-      new ShooterCommand(shooter, 0, 0)
-    );
-    NamedCommands.registerCommand(
-      "Aim",
-      new PivotCommand(
-        pivot,
-        () ->
-          Math.sqrt(
-            Math.pow(
-              -drivebase
-                .getRelativeInterpolatedPosition(
-                  pivotTimer,
-                  Shooter.AIMING_TIME,
-                  FieldElements.kSpeakerCenterRed,
-                  FieldElements.kSpeakerCenterBlue
-                )
-                .getX(),
-              2
-            ) +
-            Math.pow(
-              -drivebase
-                .getRelativeInterpolatedPosition(
-                  pivotTimer,
-                  Shooter.AIMING_TIME,
-                  FieldElements.kSpeakerCenterRed,
-                  FieldElements.kSpeakerCenterBlue
-                )
-                .getY(),
-              2
-            )
-          ),
-        () ->
-          -drivebase
-            .getRelativeInterpolatedPosition(
-              pivotTimer,
-              Shooter.AIMING_TIME,
-              FieldElements.kSpeakerCenterRed,
-              FieldElements.kSpeakerCenterBlue
-            )
-            .getZ()
-      )
-    );
-
+    //    NamedCommands.registerCommand(
+    //      "Deploy",
+    //      new DeployerCommand(intakeDeployer, Intake.LOW)
+    //    );
+    //    SequentialCommandGroup intakeCommandGroup = new SequentialCommandGroup(
+    //      new InstantCommand(() -> noteStatus = OperatorConstants.NULL),
+    //      // Deploy intake and start intake and indexer
+    //      new ParallelCommandGroup(
+    //        new ParallelRaceGroup(
+    //          new IntakeCommand(intake, false, -0.75),
+    //          new IndexerCommand(indexer, false, 0.25)
+    //        )
+    //      ),
+    //      // Stow intake and stop intake and slow indexer
+    //      new ParallelCommandGroup(new IndexerCommand(indexer, false, 0.1)),
+    //      // run indexer backwardsand set the status to true to tell the robot that the note is stored
+    //      new IndexerCommand(indexer, true, -0.4).withTimeout(0.3),
+    //      new InstantCommand(() -> noteStatus = OperatorConstants.TRUE)
+    //    );
+    //
+    //    // Command sequence for firing the note
+    //    ParallelCommandGroup fire = new ParallelCommandGroup(
+    //      new ParallelRaceGroup(
+    //        new IndexerCommand(indexer, true, 1)
+    //          .withTimeout(0.5)
+    //          .andThen(
+    //            new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
+    //          )
+    //          .andThen(new InstantCommand(pivotTimer::reset)),
+    //        new PivotCommand(
+    //          pivot,
+    //          () ->
+    //            Math.sqrt(
+    //              Math.pow(
+    //                -drivebase
+    //                  .getRelativeInterpolatedPosition(
+    //                    pivotTimer,
+    //                    Shooter.AIMING_TIME,
+    //                    FieldElements.kSpeakerCenterRed,
+    //                    FieldElements.kSpeakerCenterBlue
+    //                  )
+    //                  .getX(),
+    //                2
+    //              ) +
+    //              Math.pow(
+    //                -drivebase
+    //                  .getRelativeInterpolatedPosition(
+    //                    pivotTimer,
+    //                    Shooter.AIMING_TIME,
+    //                    FieldElements.kSpeakerCenterRed,
+    //                    FieldElements.kSpeakerCenterBlue
+    //                  )
+    //                  .getY(),
+    //                2
+    //              )
+    //            ),
+    //          () ->
+    //            -drivebase
+    //              .getRelativeInterpolatedPosition(
+    //                pivotTimer,
+    //                Shooter.AIMING_TIME,
+    //                FieldElements.kSpeakerCenterRed,
+    //                FieldElements.kSpeakerCenterBlue
+    //              )
+    //              .getZ()
+    //        )
+    //      )
+    //    );
+    //
+    //    CommandScheduler
+    //      .getInstance()
+    //      .schedule(
+    //        new RepeatCommand(
+    //          new InstantCommand(() ->
+    //            SmartDashboard.putNumber(
+    //              "Drive target",
+    //              (
+    //                Math.toDegrees(
+    //                  Math.atan(
+    //                    -drivebase
+    //                      .getRelativeInterpolatedPosition(
+    //                        driveTimer,
+    //                        Drivebase.AIMING_TIME,
+    //                        FieldElements.kSpeakerCenterRed,
+    //                        FieldElements.kSpeakerCenterBlue
+    //                      )
+    //                      .getY() /
+    //                    -drivebase
+    //                      .getRelativeInterpolatedPosition(
+    //                        driveTimer,
+    //                        Drivebase.AIMING_TIME,
+    //                        FieldElements.kSpeakerCenterRed,
+    //                        FieldElements.kSpeakerCenterBlue
+    //                      )
+    //                      .getX()
+    //                  )
+    //                ) /
+    //                180
+    //              )
+    //            )
+    //          )
+    //        )
+    //          .ignoringDisable(true)
+    //      );
+    //
+    //    SequentialCommandGroup cycle = new SequentialCommandGroup(
+    //      intakeCommandGroup,
+    //      new ParallelRaceGroup(
+    //        new PivotCommand(
+    //          pivot,
+    //          () ->
+    //            Math.sqrt(
+    //              Math.pow(
+    //                -drivebase
+    //                  .getRelativeInterpolatedPosition(
+    //                    pivotTimer,
+    //                    Shooter.AIMING_TIME,
+    //                    FieldElements.kSpeakerCenterRed,
+    //                    FieldElements.kSpeakerCenterBlue
+    //                  )
+    //                  .getX(),
+    //                2
+    //              ) +
+    //              Math.pow(
+    //                -drivebase
+    //                  .getRelativeInterpolatedPosition(
+    //                    pivotTimer,
+    //                    Shooter.AIMING_TIME,
+    //                    FieldElements.kSpeakerCenterRed,
+    //                    FieldElements.kSpeakerCenterBlue
+    //                  )
+    //                  .getY(),
+    //                2
+    //              )
+    //            ),
+    //          () ->
+    //            -drivebase
+    //              .getRelativeInterpolatedPosition(
+    //                pivotTimer,
+    //                Shooter.AIMING_TIME,
+    //                FieldElements.kSpeakerCenterRed,
+    //                FieldElements.kSpeakerCenterBlue
+    //              )
+    //              .getZ()
+    //        ),
+    //        new WaitUntilCommand(() -> autoFire)
+    //          .andThen(fire)
+    //          .andThen(new InstantCommand(() -> autoFire = false))
+    //      )
+    //    );
+    //
+    //    NamedCommands.registerCommand("StartCycle", cycle);
+    //    NamedCommands.registerCommand(
+    //      "EndCycle",
+    //      new InstantCommand(() -> autoFire = true)
+    //    );
+    //    NamedCommands.registerCommand("Fire", fire);
+    //    NamedCommands.registerCommand(
+    //      "Stow",
+    //      new DeployerCommand(intakeDeployer, Intake.HIGH)
+    //    );
+    //    NamedCommands.registerCommand(
+    //      "RunShooter",
+    //      new ShooterCommand(shooter, 1, -0.35)
+    //    );
+    //    NamedCommands.registerCommand(
+    //      "StopShooter",
+    //      new ShooterCommand(shooter, 0, 0)
+    //    );
+    //    NamedCommands.registerCommand(
+    //      "Aim",
+    //      new PivotCommand(
+    //        pivot,
+    //        () ->
+    //          Math.sqrt(
+    //            Math.pow(
+    //              -drivebase
+    //                .getRelativeInterpolatedPosition(
+    //                  pivotTimer,
+    //                  Shooter.AIMING_TIME,
+    //                  FieldElements.kSpeakerCenterRed,
+    //                  FieldElements.kSpeakerCenterBlue
+    //                )
+    //                .getX(),
+    //              2
+    //            ) +
+    //            Math.pow(
+    //              -drivebase
+    //                .getRelativeInterpolatedPosition(
+    //                  pivotTimer,
+    //                  Shooter.AIMING_TIME,
+    //                  FieldElements.kSpeakerCenterRed,
+    //                  FieldElements.kSpeakerCenterBlue
+    //                )
+    //                .getY(),
+    //              2
+    //            )
+    //          ),
+    //        () ->
+    //          -drivebase
+    //            .getRelativeInterpolatedPosition(
+    //              pivotTimer,
+    //              Shooter.AIMING_TIME,
+    //              FieldElements.kSpeakerCenterRed,
+    //              FieldElements.kSpeakerCenterBlue
+    //            )
+    //            .getZ()
+    //      )
+    //    );
+    //
     return drivebase.getAutonomousCommand("Simple Drive");
   }
 
   public void setShooterCommand() {
     shooter.setDefaultCommand(
       new RepeatCommand(
-        new ShooterCommand(shooter, -1, -0.325)
-          .onlyIf(() -> noteStatus == OperatorConstants.TRUE)
-          .until(() -> noteStatus == OperatorConstants.FALSE)
+        new ParallelCommandGroup(
+          new ShooterCommand(shooter, -1, -0.325)
+            .onlyIf(() -> noteStatus == OperatorConstants.TRUE)
+            .until(() -> noteStatus == OperatorConstants.FALSE)
+        )
       )
     );
   }

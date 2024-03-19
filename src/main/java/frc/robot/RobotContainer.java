@@ -84,6 +84,7 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the trigger bindings
     configureBindings();
+    SmartDashboard.putData("Swerve Subsystem", drivebase);
     drivebase.zeroGyro();
 
     // Applies deadbands and inverts controls because joysticks
@@ -94,7 +95,7 @@ public class RobotContainer {
     Command driveFieldOrientedDirectAngle = drivebase.driveCommand(
       () ->
         MathUtil.applyDeadband(
-          drivebase.getAxis(
+          -drivebase.getAxis(
             leftDriverNunchuck.getY(),
             leftDriverNunchuck.getRawButton(1),
             rightDriverNunchuck.getRawButton(1)
@@ -103,15 +104,15 @@ public class RobotContainer {
         ),
       () ->
         MathUtil.applyDeadband(
-          drivebase.getAxis(
+          -drivebase.getAxis(
             leftDriverNunchuck.getX(),
             leftDriverNunchuck.getRawButton(1),
             rightDriverNunchuck.getRawButton(1)
           ),
           OperatorConstants.LEFT_X_DEADBAND
         ),
-      () -> rightDriverNunchuck.getX(),
-      () -> rightDriverNunchuck.getY()
+      () -> -rightDriverNunchuck.getX(),
+      () -> -rightDriverNunchuck.getY()
     );
 
     Command driveFieldOrientedDirectAngleSim = drivebase.simDriveCommand(
@@ -236,15 +237,51 @@ public class RobotContainer {
                           )
                           .getX()
                       )
-                    ) +
-                    180
+                    )
                   ) /
                   180
               )
             )
           )
           .andThen(new InstantCommand(driveTimer::reset))
-          .andThen(new InstantCommand(pivotTimer::reset))
+          .andThen(new InstantCommand(pivotTimer::reset)),
+          new PivotCommand(
+          pivot,
+          () ->
+            Math.sqrt(
+              Math.pow(
+                -drivebase
+                  .getRelativeInterpolatedPosition(
+                    pivotTimer,
+                    Shooter.AIMING_TIME,
+                    FieldElements.kSpeakerCenterRed,
+                    FieldElements.kSpeakerCenterBlue
+                  )
+                  .getX(),
+                2
+              ) +
+              Math.pow(
+                -drivebase
+                  .getRelativeInterpolatedPosition(
+                    pivotTimer,
+                    Shooter.AIMING_TIME,
+                    FieldElements.kSpeakerCenterRed,
+                    FieldElements.kSpeakerCenterBlue
+                  )
+                  .getY(),
+                2
+              )
+            ),
+          () ->
+            -drivebase
+              .getRelativeInterpolatedPosition(
+                pivotTimer,
+                Shooter.AIMING_TIME,
+                FieldElements.kSpeakerCenterRed,
+                FieldElements.kSpeakerCenterBlue
+              )
+              .getZ()
+        )
       )
     );
 
@@ -286,46 +323,42 @@ public class RobotContainer {
 
     SequentialCommandGroup cycle = new SequentialCommandGroup(
       intakeCommandGroup,
-      new ParallelRaceGroup(
-        new PivotCommand(
-          pivot,
-          () ->
-            Math.sqrt(
-              Math.pow(
-                -drivebase
-                  .getRelativeInterpolatedPosition(
-                    pivotTimer,
-                    Shooter.AIMING_TIME,
-                    FieldElements.kSpeakerCenterRed,
-                    FieldElements.kSpeakerCenterBlue
-                  )
-                  .getX(),
-                2
-              ) +
-              Math.pow(
-                -drivebase
-                  .getRelativeInterpolatedPosition(
-                    pivotTimer,
-                    Shooter.AIMING_TIME,
-                    FieldElements.kSpeakerCenterRed,
-                    FieldElements.kSpeakerCenterBlue
-                  )
-                  .getY(),
-                2
-              )
-            ),
-          () ->
-            -drivebase
-              .getRelativeInterpolatedPosition(
-                pivotTimer,
-                Shooter.AIMING_TIME,
-                FieldElements.kSpeakerCenterRed,
-                FieldElements.kSpeakerCenterBlue
-              )
-              .getZ()
-        ),
-        new WaitUntilCommand(() -> leftDriverNunchuck.getRawButton(2))
-          .andThen(fire)
+      new PivotCommand(
+        pivot,
+        () ->
+          Math.sqrt(
+            Math.pow(
+              -drivebase
+                .getRelativeInterpolatedPosition(
+                  pivotTimer,
+                  Shooter.AIMING_TIME,
+                  FieldElements.kSpeakerCenterRed,
+                  FieldElements.kSpeakerCenterBlue
+                )
+                .getX(),
+              2
+            ) +
+            Math.pow(
+              -drivebase
+                .getRelativeInterpolatedPosition(
+                  pivotTimer,
+                  Shooter.AIMING_TIME,
+                  FieldElements.kSpeakerCenterRed,
+                  FieldElements.kSpeakerCenterBlue
+                )
+                .getY(),
+              2
+            )
+          ),
+        () ->
+          -drivebase
+            .getRelativeInterpolatedPosition(
+              pivotTimer,
+              Shooter.AIMING_TIME,
+              FieldElements.kSpeakerCenterRed,
+              FieldElements.kSpeakerCenterBlue
+            )
+            .getZ()
       )
     );
 
@@ -350,6 +383,9 @@ public class RobotContainer {
           .onlyIf(() -> noteStatus == OperatorConstants.FALSE)
           .onlyIf(() -> !overideControls)
       );
+
+    new JoystickButton(leftDriverNunchuck, 2)
+      .onTrue(fire.onlyIf(() -> !overideControls));
 
     new JoystickButton(operatorXbox, 7)
       .onTrue(cancelIntake.onlyIf(() -> noteStatus == OperatorConstants.NULL));
@@ -397,11 +433,11 @@ public class RobotContainer {
       new ParallelCommandGroup(
         new ParallelRaceGroup(
           new IntakeCommand(intake, false, -0.75),
-          new IndexerCommand(indexer, false, 0.5)
+          new IndexerCommand(indexer, false, 0.25)
         )
       ),
       // Stow intake and stop intake and slow indexer
-      new ParallelCommandGroup(new IndexerCommand(indexer, false, 0.15)),
+      new ParallelCommandGroup(new IndexerCommand(indexer, false, 0.1)),
       // run indexer backwardsand set the status to true to tell the robot that the note is stored
       new IndexerCommand(indexer, true, -0.4).withTimeout(0.3),
       new InstantCommand(() -> noteStatus = OperatorConstants.TRUE)
@@ -415,7 +451,44 @@ public class RobotContainer {
           .andThen(
             new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
           )
-          .andThen(new InstantCommand(pivotTimer::reset))
+          .andThen(new InstantCommand(pivotTimer::reset)),
+          new PivotCommand(
+          pivot,
+          () ->
+            Math.sqrt(
+              Math.pow(
+                -drivebase
+                  .getRelativeInterpolatedPosition(
+                    pivotTimer,
+                    Shooter.AIMING_TIME,
+                    FieldElements.kSpeakerCenterRed,
+                    FieldElements.kSpeakerCenterBlue
+                  )
+                  .getX(),
+                2
+              ) +
+              Math.pow(
+                -drivebase
+                  .getRelativeInterpolatedPosition(
+                    pivotTimer,
+                    Shooter.AIMING_TIME,
+                    FieldElements.kSpeakerCenterRed,
+                    FieldElements.kSpeakerCenterBlue
+                  )
+                  .getY(),
+                2
+              )
+            ),
+          () ->
+            -drivebase
+              .getRelativeInterpolatedPosition(
+                pivotTimer,
+                Shooter.AIMING_TIME,
+                FieldElements.kSpeakerCenterRed,
+                FieldElements.kSpeakerCenterBlue
+              )
+              .getZ()
+        )
       )
     );
 
@@ -560,7 +633,7 @@ public class RobotContainer {
       )
     );
 
-    return drivebase.getAutonomousCommand("Debug");
+    return drivebase.getAutonomousCommand("Simple Drive");
   }
 
   public void setShooterCommand() {

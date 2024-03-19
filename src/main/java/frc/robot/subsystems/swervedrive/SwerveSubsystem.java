@@ -138,7 +138,7 @@ public class SwerveSubsystem extends SubsystemBase {
         var alliance = DriverStation.getAlliance();
         return alliance.isPresent()
           ? alliance.get() == DriverStation.Alliance.Red
-          : true;
+          : false;
       },
       this // Reference to this subsystem to set requirements
     );
@@ -196,6 +196,7 @@ public class SwerveSubsystem extends SubsystemBase {
   ) {
     // swerveDrive.setHeadingCorrection(true); // Normally you would want heading correction for this kind of control.
     return run(() -> {
+      System.out.println("drivecommand running");
       double xInput = Math.pow(translationX.getAsDouble(), 3); // Smooth controll out
       double yInput = Math.pow(translationY.getAsDouble(), 3); // Smooth controll out
       // Make the robot move
@@ -354,6 +355,7 @@ public class SwerveSubsystem extends SubsystemBase {
       LimelightHelpers.getBotPose2d_wpiBlue(""),
       Timer.getFPGATimestamp()
     );
+    
   }
 
   @Override
@@ -548,6 +550,7 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   public double getAxis(double axis, boolean slow, boolean fast) {
+    System.out.println("controls running");
     return slow
       ? axis * Drivebase.SLOW_SPEED
       : fast ? axis * Drivebase.FAST_SPEED : axis * Drivebase.MEDIUM_SPEED;
@@ -589,9 +592,9 @@ public class SwerveSubsystem extends SubsystemBase {
   ) {
     Pose3d interpolatedPose3d = getInterpolatedPosition(t, timeToInterpolate)
       .relativeTo(
-        DriverStation.getAlliance().equals(Alliance.Blue)
-          ? blueTarget
-          : redTarget
+        DriverStation.getAlliance().equals(Alliance.Red)
+          ? redTarget
+          : blueTarget
       );
 
     SmartDashboard.putNumber("posex", interpolatedPose3d.getX());

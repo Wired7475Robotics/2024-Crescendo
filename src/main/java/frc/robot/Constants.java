@@ -125,7 +125,7 @@ public final class Constants {
     public static class MathConstants {
 
       // Constants for shooter autoaim math
-      public static final double GRAVITY_CONSTANT = 0.019; // arbitrary unit
+      public static final double GRAVITY_CONSTANT = 0.0195; // arbitrary unit
 
       public static final double CALIBRATION_DISTANCE = 60; // inches
 

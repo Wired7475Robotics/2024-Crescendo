@@ -200,7 +200,7 @@ public class RobotContainer {
     ParallelCommandGroup fire = new ParallelCommandGroup(
       new ParallelRaceGroup(
         new WaitCommand(1.5)
-          .andThen(new IndexerCommand(indexer, true, 1).withTimeout(0.5))
+          .andThen(new IndexerCommand(indexer, true, 1).withTimeout(0.75))
           .andThen(
             new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
           ),

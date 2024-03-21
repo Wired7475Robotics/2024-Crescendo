@@ -189,18 +189,22 @@ public class RobotContainer {
       // Stow intake and stop intake and slow indexer
       new ParallelCommandGroup(
         new DeployerCommand(intakeDeployer, Intake.HIGH),
-        new IndexerCommand(indexer, false, 0.3)
+        new IndexerCommand(indexer, false, 0.3).
+        new ShooterCommand(shooter, -0.1, 0, false,indexer)
+        
+        
       ),
       // run indexer backwardsand set the status to true to tell the robot that the note is stored
       new IndexerCommand(indexer, true, -0.4).withTimeout(0.15),
-      new InstantCommand(() -> noteStatus = OperatorConstants.TRUE)
+      new InstantCommand(() -> noteStatus = OperatorConstants.TRUE),
+      new ShooterCommand(shooter, 0.1, 0, true,indexer).withTimeout(0.15),
     );
 
     // Command sequence for firing the note
     ParallelCommandGroup fire = new ParallelCommandGroup(
       new ParallelRaceGroup(
         new WaitCommand(1.5)
-          .andThen(new IndexerCommand(indexer, true, 1).withTimeout(0.5))
+          .andThen(new IndexerCommand(indexer, true, 1).withTimeout(0.75))
           .andThen(
             new InstantCommand(() -> noteStatus = OperatorConstants.FALSE)
           ),
@@ -659,7 +663,7 @@ public class RobotContainer {
     shooter.setDefaultCommand(
       new RepeatCommand(
         new ParallelCommandGroup(
-          new ShooterCommand(shooter, -1, -0.325)
+          new ShooterCommand(shooter, -1, -0.325, true,indexer)
             .onlyIf(() -> noteStatus == OperatorConstants.TRUE)
             .until(() -> noteStatus == OperatorConstants.FALSE)
         )

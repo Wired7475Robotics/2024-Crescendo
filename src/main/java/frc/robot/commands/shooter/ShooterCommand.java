@@ -19,6 +19,8 @@ public class ShooterCommand extends Command {
     ShooterSubsystem shooterSubsytem,
     double speed,
     double diff
+    boolean ignoreBeamBrake,
+    IndexerSubsystem rollers
   ) {
     // set the shooter to the ShooterSubsytem
     addRequirements(shooterSubsytem);
@@ -28,6 +30,8 @@ public class ShooterCommand extends Command {
     this.speed = speed;
     // set the diff to the diff
     this.diff = diff;
+    this.rollers = rollers;
+    this.ignoreBeamBrake = ignoreBeamBrake;
   }
 
   /**
@@ -45,6 +49,14 @@ public class ShooterCommand extends Command {
    *
    * This method stops the shooter.
    */
+@Override
+  public boolean isFinished() {
+    // Return true if the beam break sensor is broken and ignoreBeamBrake is false
+    if (!ignoreBeamBrake && !rollers.getBeamBreak()) {
+      return true;
+    }
+    return false;
+  }
   @Override
   public void end(boolean interrupted) {
     // stop the shooter

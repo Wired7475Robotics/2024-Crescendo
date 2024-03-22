@@ -70,7 +70,7 @@ public final class Constants {
     // Constant for autoaim to add to target angle to account for robot velocity
     public static final double VELOCITY_CONSTANT = 0.15; // arbitrary unit
 
-    public static final double AIMING_TIME = 2;
+    public static final double AIMING_TIME = 0.2;
   }
 
   public static class Intake {
@@ -102,7 +102,10 @@ public final class Constants {
     //Minimum shooter angle
     public static final double MIN_TILT = 9.5; //degrees
     //Maximum tilt speed
-    public static final double MAX_TILT_SPEED = 0.2; //percentage
+    public static final double MAX_TILT_SPEED = 0.4; //percentage
+    //Minimum tilt RPM (when do we say that the motor has stalled)
+    public static final double MIN_TILT_RPM = 75;
+
     // Tilt conversion factor
     public static final double TILT_CONVERSION_FACTOR = 50 / 16; // degrees per rotation
 
@@ -135,7 +138,7 @@ public final class Constants {
 
     //shooter stick deadzone for manual control
     public static final double STICK_DEADZONE = 0.1; // percentage
-    public static final double AIMING_TIME = 0.1;
+    public static final double AIMING_TIME = 0.05;
   }
 
   public static class OperatorConstants {

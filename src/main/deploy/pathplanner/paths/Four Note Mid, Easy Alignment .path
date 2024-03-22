@@ -112,12 +112,28 @@
     },
     {
       "anchor": {
-        "x": 7.374696931212044,
-        "y": 4.123305701156857
+        "x": 7.800314706175031,
+        "y": 4.097305368134887
       },
       "prevControl": {
-        "x": 6.647054748654951,
-        "y": 8.013392754058236
+        "x": 4.4674378202087235,
+        "y": 3.5710616492981044
+      },
+      "nextControl": {
+        "x": 8.358370634451466,
+        "y": 4.185419462073272
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 4.305539520169949,
+        "y": 4.963760625195669
+      },
+      "prevControl": {
+        "x": 5.509765470661205,
+        "y": 3.4217639812739375
       },
       "nextControl": null,
       "isLocked": false,
@@ -160,7 +176,7 @@
             {
               "type": "named",
               "data": {
-                "name": "StartCycle"
+                "name": null
               }
             }
           ]
@@ -177,13 +193,13 @@
             {
               "type": "named",
               "data": {
-                "name": "EndCycle"
+                "name": null
               }
             },
             {
               "type": "named",
               "data": {
-                "name": "StartCycle"
+                "name": null
               }
             }
           ]
@@ -200,7 +216,7 @@
             {
               "type": "named",
               "data": {
-                "name": "EndCycle"
+                "name": null
               }
             }
           ]
@@ -217,13 +233,13 @@
             {
               "type": "named",
               "data": {
-                "name": "EndCycle"
+                "name": null
               }
             },
             {
               "type": "named",
               "data": {
-                "name": "StartCycle"
+                "name": null
               }
             }
           ]
@@ -240,7 +256,7 @@
             {
               "type": "named",
               "data": {
-                "name": "Stow"
+                "name": null
               }
             }
           ]

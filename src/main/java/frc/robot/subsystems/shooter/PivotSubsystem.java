@@ -110,10 +110,6 @@ public class PivotSubsystem extends SubsystemBase {
    * @return Whether the tilt subsystem is ready to shoot.
    */
   public boolean isReady() {
-    // If the timeout is active and the last distance is greater than the maximum distance, or the filtering is active, return false
-    if ((timeout && lastDist < Shooter.MAX_DISTANCE)) {
-      return false;
-    }
     return Math.abs(targetValue - getTiltDegrees()) <= 1;
   }
 
@@ -167,4 +163,9 @@ public class PivotSubsystem extends SubsystemBase {
     targetValue = target;
     return Math.max(Shooter.MIN_TILT, Math.min(target, Shooter.MAX_TILT));
   }
+
+public double getVelocity() {
+    return tiltDrive.getEncoder().getVelocity();
+
+}
 }

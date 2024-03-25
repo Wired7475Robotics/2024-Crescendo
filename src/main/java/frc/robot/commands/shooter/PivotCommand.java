@@ -63,7 +63,7 @@ public class PivotCommand extends Command {
       // calculate the target angle from the pivotSubsystem
       target =
         Math.toDegrees(
-          Math.atan((m_yDist.getAsDouble()+ (Math.pow(m_xDist.getAsDouble(),2)*MathConstants.GRAVITY_CONSTANT)) / m_xDist.getAsDouble())
+          Math.atan((m_yDist.getAsDouble() + (Math.pow(m_xDist.getAsDouble(),2)*MathConstants.GRAVITY_CONSTANT)) / m_xDist.getAsDouble())
         );
     }
     // set the pivotPidController setpoint to the target

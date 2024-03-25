@@ -7,12 +7,15 @@ package frc.robot;
 import com.fasterxml.jackson.core.sym.Name;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
+
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -80,7 +83,7 @@ public class RobotContainer {
 
   Timer pivotTimer = new Timer();
   Timer driveTimer = new Timer();
-
+  int step = 0;
   boolean overideControls = false;
 
   /**
@@ -94,7 +97,7 @@ public class RobotContainer {
     configureBindings();
     SmartDashboard.putData("Swerve Subsystem", drivebase);
     drivebase.zeroGyro();
-
+    pivot.resetTiltEncoder();
     // Applies deadbands and inverts controls because joysticks
     // are back-right positive while robot
     // controls are front-left positive
@@ -173,7 +176,6 @@ public class RobotContainer {
     // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
 
     climber.resetEncoders();
-    pivot.resetTiltEncoder();
 
     // Setup command sequences
 
@@ -500,31 +502,37 @@ public class RobotContainer {
       "Raise Intake",
       new DeployerCommand(intakeDeployer, Intake.HIGH)
     );
+
+
+
     NamedCommands.registerCommand(
       "Start Shooter",
-      new InstantCommand(()->CommandScheduler.getInstance().schedule(new ShooterCommand(shooter, 1, -0.35)))
+      new InstantCommand(()->CommandScheduler.getInstance().schedule(new ShooterCommand(shooter, 1, -0.35))).withTimeout(0.1)
     );
     NamedCommands.registerCommand(
       "Stop Shooter",
-      new InstantCommand(()->CommandScheduler.getInstance().schedule(new ShooterCommand(shooter, 0, 0)))
+      new InstantCommand(()->CommandScheduler.getInstance().schedule(new ShooterCommand(shooter, 0, 0))).withTimeout(0.1)
     );
     NamedCommands.registerCommand(
       "Fire",
       new IndexerCommand(indexer, true, 1).withTimeout(0.75)
     );
     NamedCommands.registerCommand("Intake", intakeCommandGroup);
-    NamedCommands.registerCommand("Start Aim", new InstantCommand(()->CommandScheduler.getInstance().schedule(aimCommandGroup)));
+    NamedCommands.registerCommand("Start Aim", new InstantCommand(()->CommandScheduler.getInstance().schedule(aimCommandGroup)).withTimeout(0.1));
     NamedCommands.registerCommand(
       "Stop Aim",
       new InstantCommand(() ->
         CommandScheduler.getInstance().cancel(aimCommandGroup)
-      )
+      ).withTimeout(0.1)
     );
+    IntakeCommand TestCommand = new IntakeCommand(intake, autoFire, noteStatus);
+    NamedCommands.registerCommand("Print", new InstantCommand(()-> SmartDashboard.putNumber("Auton",step++)).withTimeout(0.1));
 
-    return drivebase.getAutonomousCommand("Debug");
+    return drivebase.getAutonomousCommand("2 Note");
   }
 
-  public void setShooterCommand() {}
+  public void setShooterCommand() {
+  }
 
   public boolean isReady() {
     return drivebase.isReady() && pivot.isReady();
@@ -536,5 +544,9 @@ public class RobotContainer {
 
   public void setMotorBrake(boolean brake) {
     drivebase.setMotorBrake(brake);
+  }
+
+  public void setShooterOffset(){
+    SmartDashboard.putNumber("Calibration",pivot.calibrateCameraAngle(LimelightHelpers.getTY("")));
   }
 }

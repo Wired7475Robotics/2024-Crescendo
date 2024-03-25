@@ -65,10 +65,9 @@ public class PivotSubsystem extends SubsystemBase {
    * Method to reset the tilt encoder.
    */
   public void resetTiltEncoder() {
-    // Reset the tilt encoder
     tiltEncoder.reset();
     // Set the target value to the current tilt angle
-    targetValue = getTiltDegrees();
+    targetValue = 25;
   }
 
   /**

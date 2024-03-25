@@ -100,7 +100,7 @@ public final class Constants {
     //Maximum shooter angle
     public static final double MAX_TILT = 57.5; //degrees
     //Minimum shooter angle
-    public static final double MIN_TILT = 9.5; //degrees
+    public static final double MIN_TILT = 9; //degrees
     //Maximum tilt speed
     public static final double MAX_TILT_SPEED = 0.4; //percentage
     //Minimum tilt RPM (when do we say that the motor has stalled)
@@ -128,7 +128,7 @@ public final class Constants {
     public static class MathConstants {
 
       // Constants for shooter autoaim math
-      public static final double GRAVITY_CONSTANT = 0.0195; // arbitrary unit
+      public static final double GRAVITY_CONSTANT = 0.195; // arbitrary unit
 
       public static final double CALIBRATION_DISTANCE = 60; // inches
 

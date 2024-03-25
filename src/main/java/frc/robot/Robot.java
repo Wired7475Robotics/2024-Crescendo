@@ -83,6 +83,7 @@ public class Robot extends TimedRobot
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
     SmartDashboard.putString("", m_robotContainer.noteStatus == OperatorConstants.TRUE? "True": m_robotContainer.noteStatus == OperatorConstants.FALSE? "False" : "Null");
+    m_robotContainer.setShooterOffset();
   }
 
   /**
@@ -166,6 +167,7 @@ public class Robot extends TimedRobot
     {
       throw new RuntimeException(e);
     }
+    
   }
 
   /**

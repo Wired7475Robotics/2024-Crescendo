@@ -54,6 +54,9 @@ public class RobotContainer {
   private final SwerveSubsystem drivebase = new SwerveSubsystem(
     new File(Filesystem.getDeployDirectory(), "swerve")
   );
+
+  int step = 0;
+
   private static final ShooterSubsystem shooter = new ShooterSubsystem();
 
   private static final IndexerSubsystem indexer = new IndexerSubsystem();
@@ -184,16 +187,14 @@ public class RobotContainer {
       new ParallelCommandGroup(
         new DeployerCommand(intakeDeployer, Intake.LOW),
         new ParallelRaceGroup(
-          new IntakeCommand(intake, false, -0.75),
-          new IndexerCommand(indexer, false, 0.4),
-          new ShooterCommand(shooter, -0.2, 0)
+          new IntakeCommand(intake, false, -1),
+          new IndexerCommand(indexer, false, 0.4)
         )
       ),
       // Stow intake and stop intake and slow indexer
       new ParallelCommandGroup(
         new DeployerCommand(intakeDeployer, Intake.HIGH),
         new IndexerCommand(indexer, false, 0.3)
-          .raceWith(new ShooterCommand(shooter, -0.1, 0))
       ),
       // run indexer backwardsand set the status to true to tell the robot that the note is stored
       new IndexerCommand(indexer, true, -0.4)
@@ -489,7 +490,8 @@ public class RobotContainer {
               alianceChooser.getSelected().equals(RedAliance)
             )
             .getZ()
-      ).andThen(new InstantCommand(pivotTimer::reset))
+      )
+        .andThen(new InstantCommand(pivotTimer::reset))
     );
 
     NamedCommands.registerCommand(
@@ -500,28 +502,51 @@ public class RobotContainer {
       "Raise Intake",
       new DeployerCommand(intakeDeployer, Intake.HIGH)
     );
+
     NamedCommands.registerCommand(
       "Start Shooter",
-      new InstantCommand(()->CommandScheduler.getInstance().schedule(new ShooterCommand(shooter, 1, -0.35)))
+      new InstantCommand(() ->
+        CommandScheduler
+          .getInstance()
+          .schedule(new ShooterCommand(shooter, 1, -0.35))
+      )
+        .withTimeout(0.1)
     );
     NamedCommands.registerCommand(
       "Stop Shooter",
-      new InstantCommand(()->CommandScheduler.getInstance().schedule(new ShooterCommand(shooter, 0, 0)))
+      new InstantCommand(() ->
+        CommandScheduler
+          .getInstance()
+          .schedule(new ShooterCommand(shooter, 0, 0))
+      )
+        .withTimeout(0.1)
     );
     NamedCommands.registerCommand(
       "Fire",
       new IndexerCommand(indexer, true, 1).withTimeout(0.75)
     );
     NamedCommands.registerCommand("Intake", intakeCommandGroup);
-    NamedCommands.registerCommand("Start Aim", new InstantCommand(()->CommandScheduler.getInstance().schedule(aimCommandGroup)));
+    NamedCommands.registerCommand(
+      "Start Aim",
+      new InstantCommand(() ->
+        CommandScheduler.getInstance().schedule(aimCommandGroup)
+      )
+        .withTimeout(0.1)
+    );
     NamedCommands.registerCommand(
       "Stop Aim",
       new InstantCommand(() ->
         CommandScheduler.getInstance().cancel(aimCommandGroup)
       )
+        
+    );
+    NamedCommands.registerCommand(
+      "Print",
+      new InstantCommand(() -> SmartDashboard.putNumber("Auton", step++))
+        .withTimeout(0.1)
     );
 
-    return drivebase.getAutonomousCommand("Debug");
+    return drivebase.getAutonomousCommand("2 Note");
   }
 
   public void setShooterCommand() {}
@@ -536,5 +561,12 @@ public class RobotContainer {
 
   public void setMotorBrake(boolean brake) {
     drivebase.setMotorBrake(brake);
+  }
+
+  public void setShooterOffset() {
+    SmartDashboard.putNumber(
+      "Calibration",
+      pivot.calibrateCameraAngle(LimelightHelpers.getTY(""))
+    );
   }
 }

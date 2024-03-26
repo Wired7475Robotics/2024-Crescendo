@@ -197,7 +197,6 @@ public class SwerveSubsystem extends SubsystemBase {
   ) {
     // swerveDrive.setHeadingCorrection(true); // Normally you would want heading correction for this kind of control.
     return run(() -> {
-      System.out.println("drivecommand running");
       double xInput = Math.pow(translationX.getAsDouble(), 3); // Smooth controll out
       double yInput = Math.pow(translationY.getAsDouble(), 3); // Smooth controll out
       // Make the robot move
@@ -551,7 +550,7 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   public double getAxis(double axis, boolean slow, boolean fast) {
-    System.out.println("controls running");
+
     return slow
       ? axis * Drivebase.SLOW_SPEED
       : fast ? axis * Drivebase.FAST_SPEED : axis * Drivebase.MEDIUM_SPEED;

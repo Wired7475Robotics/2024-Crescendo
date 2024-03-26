@@ -177,7 +177,8 @@ public class RobotContainer {
 
     climber.resetEncoders();
     pivot.resetTiltEncoder();
-
+    SmartDashboard.putNumber("Fine Angle", 0);
+    SmartDashboard.putNumber("Raw Angle", 9);
     // Setup command sequences
 
     // Command sequence for intaking and storeing note
@@ -346,7 +347,6 @@ public class RobotContainer {
             )
           )
         )
-          .ignoringDisable(true)
       );
 
     SequentialCommandGroup cancelIntake = new SequentialCommandGroup(
@@ -433,21 +433,24 @@ public class RobotContainer {
       new ParallelCommandGroup(
         new ParallelRaceGroup(
           new IntakeCommand(intake, false, -1.0),
-          new IndexerCommand(indexer, false, 0.4),
-          new ShooterCommand(shooter, -0.2, 0)
+          new IndexerCommand(indexer, false, 0.4)
         )
       ),
       // Stow intake and stop intake and slow indexer
-      new ParallelCommandGroup(
-        new IndexerCommand(indexer, false, 0.3)
-          .raceWith(new ShooterCommand(shooter, -0.1, 0))
-      ),
+      new ParallelCommandGroup(new IndexerCommand(indexer, false, 0.3)),
       // run indexer backwardsand set the status to true to tell the robot that the note is stored
       new IndexerCommand(indexer, true, -0.4)
         .withTimeout(0.5)
         .raceWith(new ShooterCommand(shooter, 1, 0)),
       new InstantCommand(() -> noteStatus = OperatorConstants.TRUE)
     );
+
+    NamedCommands.registerCommand(
+      "Start Shooter",
+      new InstantCommand(() -> shooter.runShooter(-1, false, -0.35))
+    );
+
+    //NamedCommands.registerCommand("Stop Shooter", new ShooterCommand(shooter, 0, 0));
 
     ParallelCommandGroup aimCommandGroup = new ParallelCommandGroup(
       new InstantCommand(pivotTimer::start),
@@ -504,52 +507,68 @@ public class RobotContainer {
     );
 
     NamedCommands.registerCommand(
-      "Start Shooter",
-      new InstantCommand(() ->
-        CommandScheduler
-          .getInstance()
-          .schedule(new ShooterCommand(shooter, 1, -0.35))
-      )
-        .withTimeout(0.1)
-    );
-    NamedCommands.registerCommand(
-      "Stop Shooter",
-      new InstantCommand(() ->
-        CommandScheduler
-          .getInstance()
-          .schedule(new ShooterCommand(shooter, 0, 0))
-      )
-        .withTimeout(0.1)
-    );
-    NamedCommands.registerCommand(
       "Fire",
       new IndexerCommand(indexer, true, 1).withTimeout(0.75)
     );
     NamedCommands.registerCommand("Intake", intakeCommandGroup);
-    NamedCommands.registerCommand(
-      "Start Aim",
-      new InstantCommand(() ->
-        CommandScheduler.getInstance().schedule(aimCommandGroup)
-      )
-        .withTimeout(0.1)
-    );
+    NamedCommands.registerCommand("Start Aim", aimCommandGroup);
     NamedCommands.registerCommand(
       "Stop Aim",
       new InstantCommand(() ->
         CommandScheduler.getInstance().cancel(aimCommandGroup)
       )
-        
-    );
-    NamedCommands.registerCommand(
-      "Print",
-      new InstantCommand(() -> SmartDashboard.putNumber("Auton", step++))
-        .withTimeout(0.1)
     );
 
     return drivebase.getAutonomousCommand("2 Note");
   }
 
-  public void setShooterCommand() {}
+  public void setPivotCommand() {
+    new RepeatCommand(
+      new InstantCommand(() ->
+        SmartDashboard.putNumber(
+          "Dist",
+          Math.sqrt(
+            Math.pow(
+              -drivebase
+                .getRelativeInterpolatedPosition(
+                  pivotTimer,
+                  Shooter.AIMING_TIME,
+                  FieldElements.kSpeakerCenterRed,
+                  FieldElements.kSpeakerCenterBlue,
+                  alianceChooser.getSelected().equals(RedAliance)
+                )
+                .getX(),
+              2
+            ) +
+            Math.pow(
+              -drivebase
+                .getRelativeInterpolatedPosition(
+                  pivotTimer,
+                  Shooter.AIMING_TIME,
+                  FieldElements.kSpeakerCenterRed,
+                  FieldElements.kSpeakerCenterBlue,
+                  alianceChooser.getSelected().equals(RedAliance)
+                )
+                .getY(),
+              2
+            )
+          )
+        )
+      )
+    )
+      .schedule();
+    new PivotCommand(
+          pivot,
+          () ->
+            SmartDashboard.getNumber("Raw Angle", 9) +
+            SmartDashboard.getNumber("Fine Angle", 0) /
+            100
+        ).schedule();
+  }
+
+  public void startShooter() {}
+
+  public void stopShooter() {}
 
   public boolean isReady() {
     return drivebase.isReady() && pivot.isReady();

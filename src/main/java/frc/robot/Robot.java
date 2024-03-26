@@ -39,6 +39,8 @@ public class Robot extends TimedRobot
 
   private Timer disabledTimer;
 
+  boolean started = false;
+
   public Robot()
   {
     instance = this;
@@ -94,6 +96,7 @@ public class Robot extends TimedRobot
     m_robotContainer.setMotorBrake(true);
     disabledTimer.reset();
     disabledTimer.start();
+    m_robotContainer.stopShooter();
   }
 
   @Override
@@ -113,11 +116,13 @@ public class Robot extends TimedRobot
   public void autonomousInit()
   {
     m_robotContainer.setMotorBrake(true);
+    
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-
+    started = false;
     // schedule the autonomous command (example)
     if (m_autonomousCommand != null)
     {
+      m_robotContainer.startShooter();
       m_autonomousCommand.schedule();
     }
   }
@@ -128,6 +133,14 @@ public class Robot extends TimedRobot
   @Override
   public void autonomousPeriodic()
   {
+    if (!started){
+      //.schedule();
+    }
+
+    // The line `started = !started;` toggles the value of the boolean variable `started`. If `started`
+    // is currently `true`, it will be set to `false`, and vice versa. This is a common way to toggle a
+    // boolean variable between two states.
+    started = true;
   }
 
   @Override
@@ -143,7 +156,6 @@ public class Robot extends TimedRobot
     }
     m_robotContainer.setDriveMode();
     m_robotContainer.setMotorBrake(true);
-    m_robotContainer.setShooterCommand();
   }
 
   /**
@@ -166,6 +178,7 @@ public class Robot extends TimedRobot
     {
       throw new RuntimeException(e);
     }
+    m_robotContainer.setPivotCommand();
   }
 
   /**

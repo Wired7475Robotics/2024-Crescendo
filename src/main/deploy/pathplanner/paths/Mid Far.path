@@ -20,12 +20,12 @@
         "y": 4.082619685811823
       },
       "prevControl": {
-        "x": 7.197511026650398,
-        "y": 4.089800064761552
+        "x": 6.031357517260489,
+        "y": 3.7035121342969965
       },
       "nextControl": {
-        "x": 8.354215253885053,
-        "y": 4.076661971505762
+        "x": 8.34296761515591,
+        "y": 4.19082511308217
       },
       "isLocked": false,
       "linkedName": "Mid Far"
@@ -36,8 +36,8 @@
         "y": 5.55
       },
       "prevControl": {
-        "x": 4.4827856928441125,
-        "y": 4.014717020343132
+        "x": 4.697346849239153,
+        "y": 3.0784861569723145
       },
       "nextControl": null,
       "isLocked": false,
@@ -46,9 +46,33 @@
   ],
   "rotationTargets": [],
   "constraintZones": [],
-  "eventMarkers": [],
+  "eventMarkers": [
+    {
+      "name": "New Event Marker",
+      "waypointRelativePos": 0.75,
+      "command": {
+        "type": "sequential",
+        "data": {
+          "commands": [
+            {
+              "type": "named",
+              "data": {
+                "name": "Intake"
+              }
+            },
+            {
+              "type": "named",
+              "data": {
+                "name": "Start Shooter"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
   "globalConstraints": {
-    "maxVelocity": 3.0,
+    "maxVelocity": 2.75,
     "maxAcceleration": 3.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0

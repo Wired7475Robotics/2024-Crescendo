@@ -2,6 +2,7 @@ package frc.robot.commands.shooter;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.Constants.Shooter.MathConstants;
@@ -15,8 +16,10 @@ public class PivotCommand extends Command {
   XboxController ControllerAxis;
   double target;
   boolean useCamera = true;
+  boolean updatingTarget = false;
   DoubleSupplier m_xDist;
   DoubleSupplier m_yDist;
+  DoubleSupplier targetSupplier;
 
   /**
    * Constructor for the PivotCommand class.
@@ -51,6 +54,16 @@ public class PivotCommand extends Command {
     useCamera = false;
   }
 
+  public PivotCommand(PivotSubsystem tiltSubsystem, DoubleSupplier target){
+    this.pivotSubsystem = tiltSubsystem;
+    addRequirements(tiltSubsystem);
+    this.target = target.getAsDouble();
+    this.updatingTarget = true;
+    pivotPidController = Constants.Shooter.pivotPidController;
+    targetSupplier = target;
+    useCamera = false;
+  }
+
   /**
    * Method to execute the command.
    *
@@ -66,6 +79,13 @@ public class PivotCommand extends Command {
           Math.atan((m_yDist.getAsDouble()+ (Math.pow(m_xDist.getAsDouble(),2)*MathConstants.GRAVITY_CONSTANT)) / m_xDist.getAsDouble())
         );
     }
+
+    
+
+    if (updatingTarget){
+      target = targetSupplier.getAsDouble();
+    }
+
     // set the pivotPidController setpoint to the target
     pivotPidController.setSetpoint(pivotSubsystem.getTargetValue(target));
     // run the tilt motor at the calculated speed

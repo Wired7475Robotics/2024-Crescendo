@@ -31,7 +31,7 @@ public class DeployerSubsystem extends SubsystemBase {
     // Set the idle mode for the Deployer motor to brake
     deployer.setIdleMode(IdleMode.kBrake);
     // Set the current limit for the Deployer motor to 50
-    deployer.setSmartCurrentLimit(50);
+    deployer.setSmartCurrentLimit(65);
   }
 
   /**

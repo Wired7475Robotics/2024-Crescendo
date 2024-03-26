@@ -8,6 +8,7 @@ import com.pathplanner.lib.util.PIDConstants;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import swervelib.math.Matter;
 import swervelib.parser.PIDFConfig;
 
@@ -109,6 +110,59 @@ public final class Constants {
     // Tilt conversion factor
     public static final double TILT_CONVERSION_FACTOR = 50 / 16; // degrees per rotation
 
+    public static final double[] MathConstants = {
+      0.0376,
+      1.12357,
+      -16.12901,
+      73.30105,
+    };
+
+    public static final double ShooterTable[][] = 
+    {
+      {0.95, 57.5},
+      {1.3, 57.5},
+      {1.6, 50},
+      {1.7, 50},
+      {2, 46},
+      {2.3, 41.8},
+      {2.5, 42.9},
+      {2.7, 38},
+      {2.8, 38.5},
+      {2.9, 38.8},
+      {3.25, 33.5},
+      {3.5, 34.9},
+      {3.75, 30.95},
+      {3.9, 29.35},
+      {4.1, 31.395},
+      {4.15, 29.03},
+      {4.5, 30.7},
+      {4.6, 28.11},
+      {4.9, 27.77},
+      {5.1, 22.56},
+      {6, 28.48}
+    };
+
+    public static double getAngleFromTable(double dist) {
+      int index = 0;
+      double target = 0;
+      for(int idx = 0; idx < ShooterTable.length; idx++)
+      {
+        if(ShooterTable[idx][0] <= dist)
+        {
+          index = idx;
+          break;
+        }
+      }
+      if(index == 0)
+        target = ShooterTable[0][0];
+      else
+      {
+        double slope = (ShooterTable[index][1] - ShooterTable[index-1][1])/(ShooterTable[index][0] - ShooterTable[index-1][0]);
+        target = slope * dist +  ((ShooterTable[index][1]) - slope*ShooterTable[index][0]);
+      }
+      SmartDashboard.putNumber("Shooter Table Value", index);
+      return target;
+    }
     // Shooter PID constants
     public static final PIDController pivotPidController = new PIDController(
       0.019,
@@ -133,7 +187,6 @@ public final class Constants {
       public static final double CALIBRATION_DISTANCE = 60; // inches
 
       public static final double CALIBRATION_HEIGHT = 16; // inches
-
     }
 
     //shooter stick deadzone for manual control

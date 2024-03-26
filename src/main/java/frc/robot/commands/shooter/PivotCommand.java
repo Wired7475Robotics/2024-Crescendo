@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
+import frc.robot.Constants.Shooter;
 import frc.robot.Constants.Shooter.MathConstants;
 import frc.robot.subsystems.shooter.PivotSubsystem;
 import java.util.function.DoubleSupplier;
@@ -54,7 +55,7 @@ public class PivotCommand extends Command {
     useCamera = false;
   }
 
-  public PivotCommand(PivotSubsystem tiltSubsystem, DoubleSupplier target){
+  public PivotCommand(PivotSubsystem tiltSubsystem, DoubleSupplier target) {
     this.pivotSubsystem = tiltSubsystem;
     addRequirements(tiltSubsystem);
     this.target = target.getAsDouble();
@@ -75,21 +76,23 @@ public class PivotCommand extends Command {
     if (useCamera) {
       // calculate the target angle from the pivotSubsystem
       target =
-        Math.toDegrees(
-          Math.atan((m_yDist.getAsDouble()+ (Math.pow(m_xDist.getAsDouble(),2)*MathConstants.GRAVITY_CONSTANT)) / m_xDist.getAsDouble())
+        (
+          Math.pow(Shooter.MathConstants[0] * m_xDist.getAsDouble(), 3) +
+          Math.pow(Shooter.MathConstants[1] * m_xDist.getAsDouble(), 2) +
+          Shooter.MathConstants[2] *
+          m_xDist.getAsDouble() +
+          Shooter.MathConstants[3]
         );
     }
 
-    
-
-    if (updatingTarget){
+    if (updatingTarget) {
       target = targetSupplier.getAsDouble();
     }
 
     // set the pivotPidController setpoint to the target
     pivotPidController.setSetpoint(pivotSubsystem.getTargetValue(target));
     // run the tilt motor at the calculated speed
-    
+
     pivotSubsystem.runTilt(
       -pivotPidController.calculate(pivotSubsystem.getTiltDegrees())
     );
@@ -98,7 +101,7 @@ public class PivotCommand extends Command {
   /**
    * Method to end the command.
    *
-   * This method stops the tilt motor when the command ends.
+   * This method stops the tilt motor when the command ends.%
    */
   @Override
   public void end(boolean interrupted) {

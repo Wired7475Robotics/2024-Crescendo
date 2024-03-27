@@ -65,8 +65,7 @@ public class PivotSubsystem extends SubsystemBase {
    * Method to reset the tilt encoder.
    */
   public void resetTiltEncoder() {
-    // Reset the tilt encoder
-    tiltEncoder.reset();
+
     // Set the target value to the current tilt angle
     targetValue = getTiltDegrees();
   }
@@ -78,9 +77,9 @@ public class PivotSubsystem extends SubsystemBase {
    */
   public double getTiltDegrees() {
     // Get the tilt angle in rotations
-    double rotations = -tiltEncoder.get() / tiltConversionFactor;
+    double rotations = -tiltEncoder.getAbsolutePosition() / tiltConversionFactor;
     // Return the tilt angle in degrees. add 10 to account for the offset of the resting position of the shooter
-    return (360 * rotations) + Shooter.MIN_TILT;
+    return (360 * rotations) + Shooter.MIN_TILT - Shooter.OFFSET;
   }
 
   /**

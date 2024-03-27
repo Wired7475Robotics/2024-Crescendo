@@ -122,8 +122,7 @@ public class Robot extends TimedRobot
     // schedule the autonomous command (example)
     if (m_autonomousCommand != null)
     {
-      m_robotContainer.startShooter();
-      m_autonomousCommand.schedule();
+      m_autonomousCommand.alongWith((m_robotContainer.startShooter())).schedule();
     }
   }
 

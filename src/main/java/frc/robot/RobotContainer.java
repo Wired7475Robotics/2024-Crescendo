@@ -440,14 +440,8 @@ public class RobotContainer {
       new ParallelCommandGroup(new IndexerCommand(indexer, false, 0.3)),
       // run indexer backwardsand set the status to true to tell the robot that the note is stored
       new IndexerCommand(indexer, true, -0.4)
-        .withTimeout(0.5)
-        .raceWith(new ShooterCommand(shooter, 1, 0)),
+        .withTimeout(0.5),
       new InstantCommand(() -> noteStatus = OperatorConstants.TRUE)
-    );
-
-    NamedCommands.registerCommand(
-      "Start Shooter",
-      new InstantCommand(() -> shooter.runShooter(-1, false, -0.35))
     );
 
     //NamedCommands.registerCommand("Stop Shooter", new ShooterCommand(shooter, 0, 0));
@@ -566,7 +560,9 @@ public class RobotContainer {
         ).schedule();
   }
 
-  public void startShooter() {}
+  public Command startShooter() {
+    return new ShooterCommand(shooter, -1, -0.35);
+  }
 
   public void stopShooter() {}
 

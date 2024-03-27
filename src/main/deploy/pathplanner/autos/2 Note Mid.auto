@@ -37,12 +37,6 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "Start Shooter"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
                   "name": "Start Aim"
                 }
               },

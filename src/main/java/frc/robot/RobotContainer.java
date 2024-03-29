@@ -109,6 +109,7 @@ public class RobotContainer {
     autonChooser.addOption(oneNote, oneNote);
     SmartDashboard.putData(alianceChooser);
     SmartDashboard.putData(autonChooser);
+    SmartDashboard.putNumber("Add Offset", 0);
     // Configure the trigger bindings
     configureBindings();
     SmartDashboard.putData("Swerve Subsystem", drivebase);

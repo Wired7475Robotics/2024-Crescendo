@@ -107,7 +107,7 @@ public final class Constants {
     //Minimum tilt RPM (when do we say that the motor has stalled)
     public static final double MIN_TILT_RPM = 75;
     // Tilt encoder offset
-    public static final double OFFSET = -96.8; //degrees
+    public static double OFFSET = 0; //degrees
     // Tilt conversion factor
     public static final double TILT_CONVERSION_FACTOR = 50 / 16; // degrees per rotation
 

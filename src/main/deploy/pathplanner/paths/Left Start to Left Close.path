@@ -8,36 +8,36 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.0218209527328146,
-        "y": 7.1924631121989515
+        "x": 0.844574780058651,
+        "y": 7.043203177315446
       },
       "isLocked": false,
       "linkedName": "Left Start"
     },
     {
       "anchor": {
-        "x": 2.2998591451728356,
-        "y": 7.071189415106104
+        "x": 2.635693998660724,
+        "y": 7.155148128478076
       },
       "prevControl": {
-        "x": 1.5908744544761815,
-        "y": 7.0898469069665415
+        "x": 1.9264638571377115,
+        "y": 7.155148128478076
       },
       "nextControl": {
-        "x": 3.458064382853939,
-        "y": 7.04071032990397
+        "x": 3.7943002075283876,
+        "y": 7.155148128478076
       },
       "isLocked": false,
       "linkedName": "Left Close"
     },
     {
       "anchor": {
-        "x": 4.0,
-        "y": 5.55
+        "x": 3.9883621585424986,
+        "y": 5.6065763040617
       },
       "prevControl": {
-        "x": 3.9790334126122797,
-        "y": 6.7387108319671185
+        "x": 5.294386588773177,
+        "y": 5.755836238945205
       },
       "nextControl": null,
       "isLocked": false,
@@ -49,34 +49,15 @@
       "waypointRelativePos": 0.3,
       "rotationDegrees": 0.0,
       "rotateFast": true
+    },
+    {
+      "waypointRelativePos": 2.0,
+      "rotationDegrees": 0,
+      "rotateFast": false
     }
   ],
   "constraintZones": [],
-  "eventMarkers": [
-    {
-      "name": "New Event Marker",
-      "waypointRelativePos": 0.45,
-      "command": {
-        "type": "parallel",
-        "data": {
-          "commands": [
-            {
-              "type": "named",
-              "data": {
-                "name": "Intake"
-              }
-            },
-            {
-              "type": "named",
-              "data": {
-                "name": "Start Shooter"
-              }
-            }
-          ]
-        }
-      }
-    }
-  ],
+  "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 2.75,
     "maxAcceleration": 3.0,

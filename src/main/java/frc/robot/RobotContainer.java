@@ -73,8 +73,17 @@ public class RobotContainer {
   public static final Joystick rightDriverNunchuck = new Joystick(1);
   public static final String RedAliance = "red";
   public static final String BlueAliance = "blue";
+
+  public static final String twoNoteMid = "2 Note Mid";
+  public static final String twoNoteLeft = "2 Note Left";
+  public static final String threeNoteMid = "3 Note Mid";
+  public static final String threeNoteLeft = "3 Note Left";
+  public static final String driveOut = "Simple Drive";
+  public static final String oneNote = "1 Note";
+
   public static SendableChooser<String> alianceChooser = new SendableChooser<>();
   public static SendableChooser<String> autonChooser = new SendableChooser<>();
+
   XboxController operatorXbox = new XboxController(2);
 
   boolean autoFire = false;
@@ -92,7 +101,14 @@ public class RobotContainer {
   public RobotContainer() {
     alianceChooser.setDefaultOption("Blue", BlueAliance);
     alianceChooser.addOption("Red", RedAliance);
+    autonChooser.setDefaultOption(twoNoteMid, twoNoteMid);
+    autonChooser.addOption(driveOut, driveOut);
+    autonChooser.addOption(twoNoteLeft, twoNoteLeft);
+    autonChooser.addOption(threeNoteLeft, threeNoteLeft);
+    autonChooser.addOption(threeNoteMid, threeNoteMid);
+    autonChooser.addOption(oneNote, oneNote);
     SmartDashboard.putData(alianceChooser);
+    SmartDashboard.putData(autonChooser);
     // Configure the trigger bindings
     configureBindings();
     SmartDashboard.putData("Swerve Subsystem", drivebase);
@@ -372,8 +388,6 @@ public class RobotContainer {
 
     new JoystickButton(operatorXbox, 7).onTrue(cancelIntake);
 
-    new JoystickButton(operatorXbox, 8).onTrue(new PivotResetCommand(pivot));
-
     new JoystickButton(operatorXbox, 4)
       .whileTrue(
         new ParallelCommandGroup(
@@ -421,6 +435,12 @@ public class RobotContainer {
       );
   }
 
+
+
+
+
+
+
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
@@ -428,20 +448,18 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     SequentialCommandGroup intakeCommandGroup = new SequentialCommandGroup(
-      new InstantCommand(() -> noteStatus = OperatorConstants.NULL),
-      // Deploy intake and start intake and indexer
+      // Start intake and indexer
       new ParallelCommandGroup(
         new ParallelRaceGroup(
           new IntakeCommand(intake, false, -1.0),
           new IndexerCommand(indexer, false, 0.4)
         )
       ),
-      // Stow intake and stop intake and slow indexer
+      // Stop intake and slow indexer
       new ParallelCommandGroup(new IndexerCommand(indexer, false, 0.3)),
-      // run indexer backwardsand set the status to true to tell the robot that the note is stored
+      // run indexer backward
       new IndexerCommand(indexer, true, -0.4)
-        .withTimeout(0.5),
-      new InstantCommand(() -> noteStatus = OperatorConstants.TRUE)
+        .withTimeout(0.5)
     );
 
     //NamedCommands.registerCommand("Stop Shooter", new ShooterCommand(shooter, 0, 0));
@@ -491,6 +509,8 @@ public class RobotContainer {
         .andThen(new InstantCommand(pivotTimer::reset))
     );
 
+    PivotCommand aimLow = new PivotCommand(pivot, 25);
+
     NamedCommands.registerCommand(
       "Lower Intake",
       new DeployerCommand(intakeDeployer, Intake.LOW)
@@ -500,24 +520,32 @@ public class RobotContainer {
       new DeployerCommand(intakeDeployer, Intake.HIGH)
     );
 
+    NamedCommands.registerCommand("Start Shooter", new InstantCommand(()->shooter.runShooter(-1, false, -0.35)));
+
+    NamedCommands.registerCommand("Stop Shooter", new InstantCommand(()->shooter.runShooter(0, false, 0)));
+
     NamedCommands.registerCommand(
       "Fire",
       new IndexerCommand(indexer, true, 1).withTimeout(0.75)
     );
     NamedCommands.registerCommand("Intake", intakeCommandGroup);
-    NamedCommands.registerCommand("Start Aim", aimCommandGroup);
+    NamedCommands.registerCommand("Start Aim", new InstantCommand(()-> aimCommandGroup.schedule()));
     NamedCommands.registerCommand(
       "Stop Aim",
-      new InstantCommand(() ->
+      new ParallelCommandGroup(new InstantCommand(() ->
         CommandScheduler.getInstance().cancel(aimCommandGroup)
-      )
+      ), new InstantCommand(()-> aimLow.schedule()))
     );
 
-    return drivebase.getAutonomousCommand("2 Note");
+    return drivebase.getAutonomousCommand(autonChooser.getSelected());
   }
 
+
+
+
+
   public void setPivotCommand() {
-    new RepeatCommand(
+    new RepeatCommand( 
       new InstantCommand(() ->
         SmartDashboard.putNumber(
           "Dist",

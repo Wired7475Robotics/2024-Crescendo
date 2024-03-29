@@ -79,7 +79,7 @@ public class PivotSubsystem extends SubsystemBase {
     // Get the tilt angle in rotations
     double rotations = -tiltEncoder.getAbsolutePosition() / tiltConversionFactor;
     // Return the tilt angle in degrees. add 10 to account for the offset of the resting position of the shooter
-    return (360 * rotations) + Shooter.MIN_TILT - Shooter.OFFSET;
+    return ((360 * rotations) + Shooter.MIN_TILT - Shooter.OFFSET);
   }
 
   /**

@@ -32,12 +32,12 @@
     },
     {
       "anchor": {
-        "x": 4.0,
-        "y": 5.55
+        "x": 3.9883621585424986,
+        "y": 5.6065763040617
       },
       "prevControl": {
-        "x": 3.4472948945897888,
-        "y": 5.550603828480384
+        "x": 3.4356570531322874,
+        "y": 5.607180132542084
       },
       "nextControl": null,
       "isLocked": false,
@@ -46,31 +46,7 @@
   ],
   "rotationTargets": [],
   "constraintZones": [],
-  "eventMarkers": [
-    {
-      "name": "Intake",
-      "waypointRelativePos": 0.15,
-      "command": {
-        "type": "sequential",
-        "data": {
-          "commands": [
-            {
-              "type": "named",
-              "data": {
-                "name": "Intake"
-              }
-            },
-            {
-              "type": "named",
-              "data": {
-                "name": "Start Shooter"
-              }
-            }
-          ]
-        }
-      }
-    }
-  ],
+  "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 2.75,
     "maxAcceleration": 3.0,

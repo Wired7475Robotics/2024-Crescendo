@@ -2,29 +2,36 @@
   "version": 1.0,
   "startingPose": {
     "position": {
-      "x": 1.35,
-      "y": 5.55
+      "x": 0.6777587794889373,
+      "y": 6.681985456994171
     },
-    "rotation": 0
+    "rotation": 60.0
   },
   "command": {
     "type": "sequential",
     "data": {
       "commands": [
         {
-          "type": "named",
+          "type": "parallel",
           "data": {
-            "name": "Start Shooter"
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "Start Shooter"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Start Aim"
+                }
+              }
+            ]
           }
         },
         {
-          "type": "named",
-          "data": {
-            "name": "Start Aim"
-          }
-        },
-        {
-          "type": "deadline",
+          "type": "parallel",
           "data": {
             "commands": [
               {
@@ -46,13 +53,13 @@
                     {
                       "type": "named",
                       "data": {
-                        "name": "Stop Shooter"
+                        "name": "Stop Aim"
                       }
                     },
                     {
                       "type": "named",
                       "data": {
-                        "name": "Stop Aim"
+                        "name": "Stop Shooter"
                       }
                     }
                   ]
@@ -74,7 +81,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Mid Start to Mid Close"
+                  "pathName": "Left Start to Left Close"
                 }
               },
               {
@@ -112,19 +119,19 @@
           }
         },
         {
-          "type": "deadline",
+          "type": "sequential",
           "data": {
             "commands": [
               {
-                "type": "sequential",
+                "type": "named",
+                "data": {
+                  "name": "Fire"
+                }
+              },
+              {
+                "type": "parallel",
                 "data": {
                   "commands": [
-                    {
-                      "type": "named",
-                      "data": {
-                        "name": "Fire"
-                      }
-                    },
                     {
                       "type": "named",
                       "data": {

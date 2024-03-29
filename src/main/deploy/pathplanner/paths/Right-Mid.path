@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 4.0,
-        "y": 5.55
+        "x": 3.9883621585424986,
+        "y": 5.6065763040617
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.855935530052879,
-        "y": 4.459140554644746
+        "x": 4.844297688595377,
+        "y": 4.515716858706446
       },
       "isLocked": false,
       "linkedName": "Shoot"
@@ -64,12 +64,12 @@
     },
     {
       "anchor": {
-        "x": 4.0,
-        "y": 5.55
+        "x": 3.9883621585424986,
+        "y": 5.6065763040617
       },
       "prevControl": {
-        "x": 4.501443184704551,
-        "y": 4.543099268016718
+        "x": 4.48980534324705,
+        "y": 4.599675572078418
       },
       "nextControl": null,
       "isLocked": false,
@@ -85,20 +85,7 @@
       "command": {
         "type": "sequential",
         "data": {
-          "commands": [
-            {
-              "type": "named",
-              "data": {
-                "name": "Intake"
-              }
-            },
-            {
-              "type": "named",
-              "data": {
-                "name": "Start Shooter"
-              }
-            }
-          ]
+          "commands": []
         }
       }
     }

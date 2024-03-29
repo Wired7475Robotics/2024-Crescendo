@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 4.0,
-        "y": 5.55
+        "x": 3.9883621585424986,
+        "y": 5.6065763040617
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.6786893573787145,
-        "y": 6.654752118595146
+        "x": 4.667051515921213,
+        "y": 6.711328422656846
       },
       "isLocked": false,
       "linkedName": "Shoot"
@@ -32,12 +32,12 @@
     },
     {
       "anchor": {
-        "x": 4.0,
-        "y": 5.55
+        "x": 3.9883621585424986,
+        "y": 5.6065763040617
       },
       "prevControl": {
-        "x": 4.669360611448496,
-        "y": 6.6454233726649266
+        "x": 4.657722769990994,
+        "y": 6.7019996767266266
       },
       "nextControl": null,
       "isLocked": false,
@@ -46,31 +46,7 @@
   ],
   "rotationTargets": [],
   "constraintZones": [],
-  "eventMarkers": [
-    {
-      "name": "New Event Marker",
-      "waypointRelativePos": 0.55,
-      "command": {
-        "type": "parallel",
-        "data": {
-          "commands": [
-            {
-              "type": "named",
-              "data": {
-                "name": "Intake"
-              }
-            },
-            {
-              "type": "named",
-              "data": {
-                "name": "Start Shooter"
-              }
-            }
-          ]
-        }
-      }
-    }
-  ],
+  "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 2.75,
     "maxAcceleration": 3.0,

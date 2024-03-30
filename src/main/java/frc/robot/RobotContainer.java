@@ -79,7 +79,9 @@ public class RobotContainer {
   public static final String threeNoteMid = "3 Note Mid";
   public static final String threeNoteLeft = "3 Note Left";
   public static final String driveOut = "Simple Drive";
-  public static final String oneNote = "1 Note";
+  public static final String oneNote = "1 Note Mid";
+  public static final String oneNoteLeft = "1 Note Left";
+  public static final String oneNoteRight = "1 Note Right";
 
   public static SendableChooser<String> alianceChooser = new SendableChooser<>();
   public static SendableChooser<String> autonChooser = new SendableChooser<>();
@@ -107,6 +109,8 @@ public class RobotContainer {
     autonChooser.addOption(threeNoteLeft, threeNoteLeft);
     autonChooser.addOption(threeNoteMid, threeNoteMid);
     autonChooser.addOption(oneNote, oneNote);
+    autonChooser.addOption(oneNoteLeft, oneNoteLeft);
+    autonChooser.addOption(oneNoteRight, oneNoteRight);
     SmartDashboard.putData(alianceChooser);
     SmartDashboard.putData(autonChooser);
     SmartDashboard.putNumber("Add Offset", 0);

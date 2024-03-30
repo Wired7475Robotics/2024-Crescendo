@@ -101,15 +101,15 @@ public final class Constants {
     //Maximum shooter angle
     public static final double MAX_TILT = 57.5; //degrees
     //Minimum shooter angle
-    public static final double MIN_TILT = 9.5; //degrees
+    public static final double MIN_TILT = 11; //degrees
     //Maximum tilt speed
     public static final double MAX_TILT_SPEED = 0.4; //percentage
     //Minimum tilt RPM (when do we say that the motor has stalled)
     public static final double MIN_TILT_RPM = 75;
     // Tilt encoder offset
-    public static double OFFSET = 0; //degrees
+    public static final double OFFSET = 0.537791513444788; //degrees
     // Tilt conversion factor
-    public static final double TILT_CONVERSION_FACTOR = 50 / 16; // degrees per rotation
+    public static final double TILT_CONVERSION_FACTOR = 1; // degrees per rotation
 
     public static final double[] MathConstants = {
       0.04376,

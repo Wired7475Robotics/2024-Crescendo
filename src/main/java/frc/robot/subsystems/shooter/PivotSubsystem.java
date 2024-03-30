@@ -65,7 +65,8 @@ public class PivotSubsystem extends SubsystemBase {
    * Method to reset the tilt encoder.
    */
   public void resetTiltEncoder() {
-    Shooter.OFFSET = tiltEncoder.getAbsolutePosition();
+    //Shooter.OFFSET = tiltEncoder.getAbsolutePosition();
+    //SmartDashboard.putNumber("Shooter Offset", Shooter.OFFSET);
     targetValue = getTiltDegrees();
   }
 

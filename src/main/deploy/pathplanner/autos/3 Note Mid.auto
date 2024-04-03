@@ -150,7 +150,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Left-Mid Far"
+                  "pathName": "Mid Far"
                 }
               },
               {
@@ -226,7 +226,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Mid Far"
+                  "pathName": "Left-Mid Far"
                 }
               },
               {

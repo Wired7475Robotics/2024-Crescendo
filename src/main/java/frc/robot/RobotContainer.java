@@ -180,10 +180,8 @@ public class RobotContainer {
         ? driveFieldOrientedDirectAngle
         : driveFieldOrientedDirectAngleSim
     );
-    ClimberCommand climbCommand = new ClimberCommand(climber, operatorXbox);
     PivotCommand pivotCommand = new PivotCommand(pivot, 25);
     pivot.setDefaultCommand(pivotCommand);
-    climber.setDefaultCommand(climbCommand);
   }
 
   /**
@@ -210,7 +208,7 @@ public class RobotContainer {
         new DeployerCommand(intakeDeployer, Intake.LOW),
         new ParallelRaceGroup(
           new IntakeCommand(intake, false, -1),
-          new IndexerCommand(indexer, false, 0.4)
+          new IndexerCommand(indexer, false, 0.6)
         )
       ),
       // Stow intake and stop intake and slow indexer
@@ -384,6 +382,15 @@ public class RobotContainer {
       new DeployerCommand(intakeDeployer, Intake.HIGH)
     );
 
+    ParallelRaceGroup lob = new ParallelRaceGroup(
+      new ShooterCommand(shooter, -0.6, -0.2),
+      new PivotCommand(pivot, 50),
+      new SequentialCommandGroup(
+        new WaitCommand(1.25),
+        new IndexerCommand(indexer, true, 1).withTimeout(0.75)
+      )
+    );
+
     // bind command sequences to buttons
 
     // if the note is not stored, run intake command sequence. if the intake command sequence is running, cancel the intake command sequence
@@ -407,6 +414,8 @@ public class RobotContainer {
           new IndexerCommand(indexer, true, -0.75)
         )
       );
+
+    new JoystickButton(operatorXbox, 6).whileTrue(lob);
 
     new Trigger(() -> operatorXbox.getPOV() == 180)
       .whileTrue(

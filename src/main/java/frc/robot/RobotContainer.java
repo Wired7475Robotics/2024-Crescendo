@@ -82,6 +82,7 @@ public class RobotContainer {
   public static final String oneNote = "1 Note Mid";
   public static final String oneNoteLeft = "1 Note Left";
   public static final String oneNoteRight = "1 Note Right";
+  public static final String threeNoteRight = "3 Note Right";
 
   public static SendableChooser<String> alianceChooser = new SendableChooser<>();
   public static SendableChooser<String> autonChooser = new SendableChooser<>();
@@ -111,6 +112,7 @@ public class RobotContainer {
     autonChooser.addOption(oneNote, oneNote);
     autonChooser.addOption(oneNoteLeft, oneNoteLeft);
     autonChooser.addOption(oneNoteRight, oneNoteRight);
+    autonChooser.addOption(threeNoteRight, threeNoteRight);
     SmartDashboard.putData(alianceChooser);
     SmartDashboard.putData(autonChooser);
     SmartDashboard.putNumber("Add Offset", 0);
@@ -391,6 +393,15 @@ public class RobotContainer {
       )
     );
 
+    //ParallelRaceGroup amp = new ParallelRaceGroup(
+    //  new ShooterCommand(shooter, -0.3, -0.1),
+    //  new PivotCommand(pivot, 50),
+    //  new SequentialCommandGroup(
+    //    new WaitCommand(0.75),
+    //    new IndexerCommand(indexer, true, 1).withTimeout(0.75)
+    //  )
+    //);
+
     // bind command sequences to buttons
 
     // if the note is not stored, run intake command sequence. if the intake command sequence is running, cancel the intake command sequence
@@ -416,6 +427,8 @@ public class RobotContainer {
       );
 
     new JoystickButton(operatorXbox, 6).whileTrue(lob);
+
+    //new JoystickButton(operatorXbox, 5).whileTrue(amp);
 
     new Trigger(() -> operatorXbox.getPOV() == 180)
       .whileTrue(

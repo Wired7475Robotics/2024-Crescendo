@@ -10,6 +10,10 @@ import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.ReplanningConfig;
+
+import edu.wpi.first.math.MatBuilder;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -353,7 +357,7 @@ public class SwerveSubsystem extends SubsystemBase {
     }
     swerveDrive.addVisionMeasurement(
       LimelightHelpers.getBotPose2d_wpiBlue(""),
-      Timer.getFPGATimestamp()
+      Timer.getFPGATimestamp(), MatBuilder.fill(Nat.N3(), Nat.N1(), 1,1,1 )
     );
     
   }

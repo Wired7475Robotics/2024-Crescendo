@@ -115,7 +115,7 @@ public final class Constants {
       0.04376,
       1.1457,
       -15.9901,
-      73.83105
+      70.83105
     };
 
     public static final double ShooterTable[][] = {

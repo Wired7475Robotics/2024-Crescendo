@@ -385,22 +385,22 @@ public class RobotContainer {
     );
 
     ParallelRaceGroup lob = new ParallelRaceGroup(
-      new ShooterCommand(shooter, -0.6, -0.2),
+      new ShooterCommand(shooter, -1, -0.2),
       new PivotCommand(pivot, 50),
       new SequentialCommandGroup(
-        new WaitCommand(1.25),
+        new WaitCommand(2),
         new IndexerCommand(indexer, true, 1).withTimeout(0.75)
       )
     );
 
-    //ParallelRaceGroup amp = new ParallelRaceGroup(
-    //  new ShooterCommand(shooter, -0.3, -0.1),
-    //  new PivotCommand(pivot, 50),
-    //  new SequentialCommandGroup(
-    //    new WaitCommand(0.75),
-    //    new IndexerCommand(indexer, true, 1).withTimeout(0.75)
-    //  )
-    //);
+    ParallelRaceGroup amp = new ParallelRaceGroup(
+      new ShooterCommand(shooter, -0.3, -0.1),
+      new PivotCommand(pivot, 50),
+      new SequentialCommandGroup(
+        new WaitCommand(0.75),
+        new IndexerCommand(indexer, true, 1).withTimeout(0.75)
+      )
+    );
 
     // bind command sequences to buttons
 
@@ -428,7 +428,7 @@ public class RobotContainer {
 
     new JoystickButton(operatorXbox, 6).whileTrue(lob);
 
-    //new JoystickButton(operatorXbox, 5).whileTrue(amp);
+    new JoystickButton(operatorXbox, 5).whileTrue(amp);
 
     new Trigger(() -> operatorXbox.getPOV() == 180)
       .whileTrue(

@@ -103,7 +103,7 @@ public final class Constants {
     //Minimum shooter angle
     public static final double MIN_TILT = 10; //degrees
     //Maximum tilt speed
-    public static final double MAX_TILT_SPEED = 0.4; //percentage
+    public static final double MAX_TILT_SPEED = 0.17; //percentage
     //Minimum tilt RPM (when do we say that the motor has stalled)
     public static final double MIN_TILT_RPM = 75;
     // Tilt encoder offset

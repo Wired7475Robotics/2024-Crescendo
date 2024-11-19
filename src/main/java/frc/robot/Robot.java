@@ -96,7 +96,6 @@ public class Robot extends TimedRobot
     m_robotContainer.setMotorBrake(true);
     disabledTimer.reset();
     disabledTimer.start();
-    m_robotContainer.stopShooter();
   }
 
   @Override
@@ -177,7 +176,6 @@ public class Robot extends TimedRobot
     {
       throw new RuntimeException(e);
     }
-    m_robotContainer.setPivotCommand();
   }
 
   /**
